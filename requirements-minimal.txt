@@ -1,4 +1,4 @@
-# Core Django (MINIMAL - Use this if requirements.txt fails)
+# Core Django (MINIMAL - Same as requirements.txt now)
 Django==4.2.9
 asgiref==3.8.1
 sqlparse==0.5.0
@@ -15,16 +15,13 @@ dj-database-url==2.1.0
 gunicorn==21.2.0
 whitenoise==6.6.0
 
-# Excel Export (Essential)
+# Excel Export
 openpyxl==3.1.5
 et-xmlfile==2.0.0
 
-# Data Processing (Essential for analytics)
-pandas==2.2.2
-numpy==1.26.4
+# Data Processing (for Excel/Analytics)
 python-dateutil==2.9.0.post0
 pytz==2024.1
-six==1.16.0
 
 # Image Processing
 Pillow==10.3.0

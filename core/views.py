@@ -9,11 +9,10 @@ from django.utils import timezone
 from django.db import transaction
 from .models import User, Program, Year, Course, Student, TutorApplication, Session, Feedback, Config, EvaluationYear
 from . import forms
-import pandas as pd
 from io import BytesIO
 from datetime import datetime, timedelta, date
 import json
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
@@ -256,51 +255,61 @@ def bulk_upload_users(request):
     if request.method == 'POST' and request.FILES.get('file'):
         try:
             excel_file = request.FILES['file']
-            df = pd.read_excel(excel_file)
-            
+
+            # Load workbook using openpyxl
+            wb = load_workbook(excel_file)
+            ws = wb.active
+
+            # Get headers from first row
+            headers = [cell.value for cell in ws[1]]
+
             success_count = 0
             error_count = 0
             errors = []
-            
-            for index, row in df.iterrows():
+
+            # Process each row (skip header)
+            for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                 try:
-                    email = row.get('email')
-                    password = row.get('password', 'changeme123')
-                    first_name = row.get('first_name')
-                    last_name = row.get('last_name')
-                    role = row.get('role')
-                    student_id = row.get('student_id')
-                    program_code = row.get('program')  # New: Program code (MD or NS)
-                    year_number = row.get('year')  # New: Year number (1-6 for MD, 1-4 for Nursing)
+                    # Create dict from row
+                    row_data = dict(zip(headers, row))
+
+                    email = row_data.get('email')
+                    password = row_data.get('password') or 'changeme123'
+                    first_name = row_data.get('first_name')
+                    last_name = row_data.get('last_name')
+                    role = row_data.get('role')
+                    student_id = row_data.get('student_id')
+                    program_code = row_data.get('program')  # New: Program code (MD or NS)
+                    year_number = row_data.get('year')  # New: Year number (1-6 for MD, 1-4 for Nursing)
 
                     # Validate required fields
                     if not all([email, first_name, last_name, role]):
-                        errors.append(f'Row {index + 2}: Missing required fields (email, first_name, last_name, role)')
+                        errors.append(f'Row {row_idx}: Missing required fields (email, first_name, last_name, role)')
                         error_count += 1
                         continue
 
                     # Validate role
                     valid_roles = ['Admin', 'Manager', 'Student', 'Tutor']
                     if role not in valid_roles:
-                        errors.append(f'Row {index + 2}: Invalid role "{role}". Must be one of: {", ".join(valid_roles)}')
+                        errors.append(f'Row {row_idx}: Invalid role "{role}". Must be one of: {", ".join(valid_roles)}')
                         error_count += 1
                         continue
 
                     # Validate student_id for Student role only
-                    if role == 'Student' and (pd.isna(student_id) or not student_id):
-                        errors.append(f'Row {index + 2}: Student ID is required for Student role')
+                    if role == 'Student' and not student_id:
+                        errors.append(f'Row {row_idx}: Student ID is required for Student role')
                         error_count += 1
                         continue
 
                     # Validate Program and Year for Student role (PAL Action Plan v2)
                     if role == 'Student':
-                        if pd.isna(program_code) or not program_code:
-                            errors.append(f'Row {index + 2}: Program is required for Student role')
+                        if not program_code:
+                            errors.append(f'Row {row_idx}: Program is required for Student role')
                             error_count += 1
                             continue
 
-                        if pd.isna(year_number) or not year_number:
-                            errors.append(f'Row {index + 2}: Year is required for Student role')
+                        if not year_number:
+                            errors.append(f'Row {row_idx}: Year is required for Student role')
                             error_count += 1
                             continue
 
@@ -308,7 +317,7 @@ def bulk_upload_users(request):
                         try:
                             program = Program.objects.get(code=program_code)
                         except Program.DoesNotExist:
-                            errors.append(f'Row {index + 2}: Invalid program code "{program_code}". Must be MD or NS')
+                            errors.append(f'Row {row_idx}: Invalid program code "{program_code}". Must be MD or NS')
                             error_count += 1
                             continue
 
@@ -316,30 +325,30 @@ def bulk_upload_users(request):
                         try:
                             year_number = int(year_number)
                             if program.code == 'MD' and not (1 <= year_number <= 6):
-                                errors.append(f'Row {index + 2}: Year for MD must be between 1 and 6')
+                                errors.append(f'Row {row_idx}: Year for MD must be between 1 and 6')
                                 error_count += 1
                                 continue
                             elif program.code == 'NS' and not (1 <= year_number <= 4):
-                                errors.append(f'Row {index + 2}: Year for Nursing must be between 1 and 4')
+                                errors.append(f'Row {row_idx}: Year for Nursing must be between 1 and 4')
                                 error_count += 1
                                 continue
 
                             # Get the Year object
                             year = Year.objects.get(program=program, year_number=year_number)
                         except (ValueError, Year.DoesNotExist):
-                            errors.append(f'Row {index + 2}: Invalid year number "{year_number}" for program {program_code}')
+                            errors.append(f'Row {row_idx}: Invalid year number "{year_number}" for program {program_code}')
                             error_count += 1
                             continue
 
                     # Check email uniqueness
                     if User.objects.filter(email=email).exists():
-                        errors.append(f'Row {index + 2}: Email {email} already exists')
+                        errors.append(f'Row {row_idx}: Email {email} already exists')
                         error_count += 1
                         continue
 
                     # Check student_id uniqueness if provided
-                    if student_id and not pd.isna(student_id) and User.objects.filter(student_id=student_id).exists():
-                        errors.append(f'Row {index + 2}: Student ID {student_id} already exists')
+                    if student_id and User.objects.filter(student_id=student_id).exists():
+                        errors.append(f'Row {row_idx}: Student ID {student_id} already exists')
                         error_count += 1
                         continue
 
@@ -352,7 +361,7 @@ def bulk_upload_users(request):
                             first_name=first_name,
                             last_name=last_name,
                             role=role,
-                            student_id=student_id if not pd.isna(student_id) else None
+                            student_id=student_id if student_id else None
                         )
 
                         # Create Student profile if role is Student
@@ -366,16 +375,16 @@ def bulk_upload_users(request):
                     success_count += 1
 
                 except Exception as e:
-                    errors.append(f'Row {index + 2}: {str(e)}')
+                    errors.append(f'Row {row_idx}: {str(e)}')
                     error_count += 1
-            
+
             return JsonResponse({
                 'success': True,
                 'success_count': success_count,
                 'error_count': error_count,
                 'errors': errors[:10]
             })
-            
+
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     
