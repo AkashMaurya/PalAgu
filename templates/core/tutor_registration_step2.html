@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block title %}Tutor Registration - Step 2{% endblock %}
+
+{% block content %}
+<div class="grid-container py-8">
+    <div class="max-w-2xl mx-auto">
+        <div class="mb-8">
+            <div class="flex items-center justify-center gap-4">
+              <!-- Completed: Step 1 -->
+              <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-[var(--color-success-500)] text-white flex items-center justify-center">
+                  <i data-lucide="check" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <div class="h-0.5 w-16 bg-[var(--color-success-100)]"></div>
+              <!-- Current: Step 2 -->
+              <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-[var(--color-primary-600)] text-white flex items-center justify-center ring-4 ring-[var(--color-primary-100)]">2</div>
+              </div>
+              <div class="h-0.5 w-16 bg-[var(--color-border)]"></div>
+              <!-- Upcoming: Step 3 -->
+              <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-[var(--color-background-secondary)] border-2 border-[var(--color-border)] text-[var(--color-text-tertiary)] flex items-center justify-center">3</div>
+              </div>
+              <div class="h-0.5 w-16 bg-[var(--color-border)]"></div>
+              <!-- Upcoming: Step 4 -->
+              <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-[var(--color-background-secondary)] border-2 border-[var(--color-border)] text-[var(--color-text-tertiary)] flex items-center justify-center">4</div>
+              </div>
+            </div>
+        </div>
+
+        <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-8 border border-[var(--color-border)]">
+            <h1 class="text-2xl font-semibold text-[var(--color-text-primary)] mb-2">Tutor Application</h1>
+            <p class="text-[var(--color-text-secondary)] mb-4">Step 2 of 4: Academic Information</p>
+
+            <!-- Info Banner -->
+            {% if student_profile %}
+            <div class="mb-6 p-4 rounded-[var(--radius-md)] border bg-[var(--color-info-50)] border-[var(--color-info-100)]">
+              <div class="flex items-start gap-3">
+                <i data-lucide="info" class="w-5 h-5 text-[var(--color-info-600)] mt-0.5"></i>
+                <div class="text-sm text-[var(--color-info-600)]">
+                  <p class="font-semibold">Your registered program: {{ student_profile.program.name }} - {{ student_profile.year.name }}</p>
+                  <p class="mt-1">You can select any program and year you want to tutor.</p>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            <form id="registrationForm" hx-post="{% url 'tutor_registration_step2' %}" hx-target="#form-errors" hx-swap="innerHTML" x-data="programYearFilter()">
+                {% csrf_token %}
+                <div id="form-errors" class="mb-4"></div>
+
+                <div class="mb-6">
+                    <label for="id_program" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Program <span class="text-red-500">*</span>
+                    </label>
+                    <select name="program" id="id_program" x-model="selectedProgram" @change="filterYears()" required
+                           class="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-dark-300 rounded-lg bg-neutral-50 dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 focus:border-transparent">
+                        <option value="">Select Program</option>
+                        {% for program in form.fields.program.queryset %}
+                        <option value="{{ program.id }}" {% if form.program.value == program.id %}selected{% endif %}>{{ program.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label for="id_year" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Year to Tutor <span class="text-red-500">*</span>
+                    </label>
+                    <select name="year" id="id_year" x-model="selectedYear" required
+                           class="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-dark-300 rounded-lg bg-neutral-50 dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 focus:border-transparent">
+                        <option value="">Select Year to Tutor</option>
+                        <template x-for="year in filteredYears" :key="year.id">
+                            <option :value="year.id" x-text="year.program_code + ' - ' + year.name"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label for="id_gpa" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        GPA <span class="text-neutral-500 dark:text-neutral-dark-500">(Optional)</span>
+                    </label>
+                    <input type="number" name="gpa" id="id_gpa" step="0.01" min="0" max="4.0" placeholder="e.g., 3.75"
+                           class="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-dark-300 rounded-lg bg-neutral-50 dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 focus:border-transparent">
+                    <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-dark-500">Enter your GPA (0.0 - 4.0). If provided, minimum GPA may be required for tutoring.</p>
+                </div>
+
+                <div class="mb-6">
+                    <label for="id_motivation" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Why do you want to be a PAL tutor? <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="motivation" id="id_motivation" rows="4" required placeholder="Share your motivation for becoming a PAL tutor..."
+                              class="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-dark-300 rounded-lg bg-neutral-50 dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 focus:border-transparent"></textarea>
+                    <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-dark-500">Short open answer</p>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-3">
+                        Rate your confidence in teaching a small group <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex items-center space-x-6">
+                        <span class="text-sm text-neutral-600 dark:text-neutral-dark-600">Low</span>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="confidence_rating" value="1" required class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                                <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">1</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="confidence_rating" value="2" class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                                <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">2</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="confidence_rating" value="3" class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                                <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">3</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="confidence_rating" value="4" class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                                <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">4</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="confidence_rating" value="5" class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                                <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">5</span>
+                            </label>
+                        </div>
+                        <span class="text-sm text-neutral-600 dark:text-neutral-dark-600">High</span>
+                    </div>
+                    <p class="mt-2 text-xs text-neutral-500 dark:text-neutral-dark-500">1 (Low) to 5 (High)</p>
+                </div>
+
+                <!-- Optional Preferences -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-3">
+                        Preferred Teaching Days <span class="text-neutral-500 dark:text-neutral-dark-500">(Optional)</span>
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="preferred_days" value="Monday"
+                                   class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 border-neutral-300 dark:border-neutral-dark-300 rounded focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                            <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">Monday</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="preferred_days" value="Tuesday"
+                                   class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 border-neutral-300 dark:border-neutral-dark-300 rounded focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                            <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">Tuesday</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="preferred_days" value="Wednesday"
+                                   class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 border-neutral-300 dark:border-neutral-dark-300 rounded focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                            <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">Wednesday</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="preferred_days" value="Thursday"
+                                   class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 border-neutral-300 dark:border-neutral-dark-300 rounded focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                            <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">Thursday</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="preferred_days" value="Friday"
+                                   class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 border-neutral-300 dark:border-neutral-dark-300 rounded focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                            <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">Friday</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="preferred_days" value="Saturday"
+                                   class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 border-neutral-300 dark:border-neutral-dark-300 rounded focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                            <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">Saturday</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="preferred_days" value="Sunday"
+                                   class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 border-neutral-300 dark:border-neutral-dark-300 rounded focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                            <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">Sunday</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-3">
+                        Preferred Teaching Times <span class="text-neutral-500 dark:text-neutral-dark-500">(Optional)</span>
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="preferred_times" value="Morning"
+                                   class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 border-neutral-300 dark:border-neutral-dark-300 rounded focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                            <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">Morning (8 AM - 12 PM)</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="preferred_times" value="Afternoon"
+                                   class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 border-neutral-300 dark:border-neutral-dark-300 rounded focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                            <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">Afternoon (12 PM - 5 PM)</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="preferred_times" value="Evening"
+                                   class="w-4 h-4 text-primary-500 dark:text-primary-dark-500 border-neutral-300 dark:border-neutral-dark-300 rounded focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                            <span class="ml-2 text-sm text-neutral-700 dark:text-neutral-dark-700">Evening (5 PM - 9 PM)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label for="id_preferred_mode" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Preferred Teaching Mode <span class="text-neutral-500 dark:text-neutral-dark-500">(Optional)</span>
+                    </label>
+                    <select name="preferred_mode" id="id_preferred_mode"
+                            class="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-dark-300 rounded-lg bg-neutral-50 dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 focus:border-transparent">
+                        <option value="">Select Mode</option>
+                        <option value="In-person">In-person</option>
+                        <option value="Online">Online</option>
+                        <option value="Hybrid">Hybrid</option>
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label for="id_max_sessions_per_week" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Maximum Sessions Per Week <span class="text-neutral-500 dark:text-neutral-dark-500">(Optional)</span>
+                    </label>
+                    <input type="number" name="max_sessions_per_week" id="id_max_sessions_per_week" min="1" max="10" placeholder="e.g., 3"
+                           class="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-dark-300 rounded-lg bg-neutral-50 dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 focus:border-transparent">
+                </div>
+
+                <!-- Consent -->
+                <div class="mb-8">
+                    <label class="flex items-start">
+                        <input type="checkbox" name="consent" id="id_consent" required
+                               class="w-5 h-5 mt-0.5 text-primary-500 dark:text-primary-dark-500 border-neutral-300 dark:border-neutral-dark-300 rounded focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                        <span class="ml-3 text-sm text-neutral-700 dark:text-neutral-dark-700">
+                            I consent to the terms and conditions of the PAL program and agree to participate as a tutor. <span class="text-red-500">*</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <a href="{% url 'tutor_registration_start' %}"
+                       class="h-10 px-6 border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded-[var(--radius-md)] font-medium hover:bg-[var(--color-surface-hover)] transition-colors flex items-center gap-2">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i><span>Back</span>
+                    </a>
+                    <button type="submit" class="h-10 px-6 bg-[var(--color-primary-600)] text-white rounded-[var(--radius-md)] font-medium hover:bg-[var(--color-primary-700)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary-600)] transition-colors flex items-center gap-2">
+                        <span>Next Step</span><i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function programYearFilter() {
+        return {
+            selectedProgram: '{{ form.program.value|default:"" }}',
+            selectedYear: '{{ form.year.value|default:"" }}',
+            allYears: [
+                {% for year in form.fields.year.queryset.all %}
+                {
+                    id: {{ year.id }},
+                    name: '{{ year.name|escapejs }}',
+                    program_id: {{ year.program.id }},
+                    program_code: '{{ year.program.code|escapejs }}'
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            filteredYears: [],
+
+            init() {
+                // Initialize filtered years on page load
+                this.filterYears();
+            },
+
+            filterYears() {
+                if (!this.selectedProgram) {
+                    // If no program selected, show all years
+                    this.filteredYears = this.allYears;
+                } else {
+                    // Filter years by selected program
+                    this.filteredYears = this.allYears.filter(year =>
+                        year.program_id == this.selectedProgram
+                    );
+                }
+
+                // Reset year selection if current year is not in filtered list
+                if (this.selectedYear) {
+                    const yearExists = this.filteredYears.some(year => year.id == this.selectedYear);
+                    if (!yearExists) {
+                        this.selectedYear = '';
+                    }
+                }
+            }
+        }
+    }
+
+    document.getElementById('registrationForm').addEventListener('htmx:afterRequest', function(event) {
+        if (event.detail.successful) {
+            const response = JSON.parse(event.detail.xhr.response);
+            if (response.next_step) { window.location.href = "{% url 'tutor_registration_step3' %}"; }
+        } else {
+            const response = JSON.parse(event.detail.xhr.response);
+            let errorHTML = '<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-800 dark:text-red-200">';
+            if (response.errors) {
+                errorHTML += '<ul class="list-disc list-inside space-y-1">';
+                for (let field in response.errors) { response.errors[field].forEach(error => { errorHTML += `<li><strong>${field}:</strong> ${error}</li>`; }); }
+                errorHTML += '</ul>';
+            } else if (response.error) { errorHTML += response.error; }
+            errorHTML += '</div>';
+            document.getElementById('form-errors').innerHTML = errorHTML;
+        }
+    });
+</script>
+{% endblock %}

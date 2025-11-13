@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard - PAL Program{% endblock %}
+
+{% block content %}
+<div class="grid-container py-8">
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-[var(--color-text-primary)]">Welcome, {{ user.get_full_name }}!</h1>
+    <p class="text-[var(--color-text-secondary)] mt-1">Student Dashboard</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- KPI 1 -->
+    <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-6">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-sm text-[var(--color-text-secondary)]">Upcoming Sessions</p>
+          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">0</h2>
+          <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">+0 this week</p>
+        </div>
+        <div class="p-3 rounded-[var(--radius-md)] bg-[var(--color-background-secondary)] text-[var(--color-primary-600)]">
+          <i data-lucide="calendar" class="w-5 h-5"></i>
+        </div>
+      </div>
+    </div>
+    <!-- KPI 2 -->
+    <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-6">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-sm text-[var(--color-text-secondary)]">Registered Courses</p>
+          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">0</h2>
+          <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">Active semester</p>
+        </div>
+        <div class="p-3 rounded-[var(--radius-md)] bg-[var(--color-background-secondary)] text-[var(--color-accent-500)]">
+          <i data-lucide="book-open" class="w-5 h-5"></i>
+        </div>
+      </div>
+    </div>
+    <!-- KPI 3 -->
+    <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-6">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-sm text-[var(--color-text-secondary)]">Pending Feedback</p>
+          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">0</h2>
+          <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">Needs attention</p>
+        </div>
+        <div class="p-3 rounded-[var(--radius-md)] bg-[var(--color-background-secondary)] text-[var(--color-warning-600)]">
+          <i data-lucide="message-square" class="w-5 h-5"></i>
+        </div>
+      </div>
+    </div>
+    <!-- KPI 4 -->
+    <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-6">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-sm text-[var(--color-text-secondary)]">Hours Completed</p>
+          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">0</h2>
+          <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">+0 this month</p>
+        </div>
+        <div class="p-3 rounded-[var(--radius-md)] bg-[var(--color-background-secondary)] text-[var(--color-info-500)]">
+          <i data-lucide="trending-up" class="w-5 h-5"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <a href="{% url 'learner_feedback_submit' %}" class="rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--color-success-50)] to-[var(--color-accent-50)] border border-[var(--color-success-100)] p-6 hover:shadow-[var(--shadow-lg)] transition">
+      <div class="flex items-start justify-between">
+        <div class="p-3 rounded-[var(--radius-md)] bg-[var(--color-success-100)] text-[var(--color-success-600)]">
+          <i data-lucide="message-square" class="w-5 h-5"></i>
+        </div>
+        <i data-lucide="arrow-right" class="w-5 h-5 text-[var(--color-success-600)]"></i>
+      </div>
+      <h3 class="mt-4 text-[var(--color-text-primary)] font-semibold">Submit Feedback</h3>
+      <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Share your experience with your PAL tutor.</p>
+    </a>
+    <a href="{% url 'tutor_registration_start' %}" class="rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--color-secondary-50)] to-[var(--color-primary-50)] border border-[var(--color-secondary-100)] p-6 hover:shadow-[var(--shadow-lg)] transition">
+      <div class="flex items-start justify-between">
+        <div class="p-3 rounded-[var(--radius-md)] bg-[var(--color-secondary-100)] text-[var(--color-secondary-600)]">
+          <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+        </div>
+        <i data-lucide="arrow-right" class="w-5 h-5 text-[var(--color-secondary-600)]"></i>
+      </div>
+      <h3 class="mt-4 text-[var(--color-text-primary)] font-semibold">Become a Tutor</h3>
+      <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Apply to become a PAL tutor and help your peers.</p>
+    </a>
+  </div>
+
+  <!-- Recent & Announcements -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-[var(--color-text-primary)] font-semibold">Recent Sessions</h3>
+        <a href="{% url 'create_session' %}" class="text-sm text-[var(--color-primary-600)] hover:text-[var(--color-primary-700)]">Create Session</a>
+      </div>
+      <div class="text-sm text-[var(--color-text-secondary)]">
+        <p>No recent sessions yet.</p>
+      </div>
+    </div>
+    <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-[var(--color-text-primary)] font-semibold">Announcements</h3>
+      </div>
+      <ul class="space-y-4">
+        <li>
+          <p class="text-sm text-[var(--color-text-primary)]">Feedback Survey Reminder</p>
+          <p class="text-xs text-[var(--color-text-tertiary)]">Please complete feedback for your recent tutoring sessions.</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

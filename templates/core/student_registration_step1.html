@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Registration - Step 1{% endblock %}
+
+{% block content %}
+<div class="grid-container py-8">
+    <div class="max-w-2xl mx-auto">
+        <!-- Stepper -->
+        <div class="mb-8">
+          <div class="flex items-center">
+            <!-- Current: Step 1 -->
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-full bg-[var(--color-primary-600)] text-white flex items-center justify-center ring-4 ring-[var(--color-primary-100)]">1</div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-[var(--color-text-primary)]">Personal Info</p>
+              </div>
+            </div>
+            <div class="flex-1 h-0.5 mx-4 bg-[var(--color-border)]"></div>
+            <!-- Upcoming: Step 2 -->
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-full bg-[var(--color-background-secondary)] border-2 border-[var(--color-border)] text-[var(--color-text-tertiary)] flex items-center justify-center">2</div>
+              <div class="ml-3">
+                <p class="text-sm text-[var(--color-text-secondary)]">Program</p>
+              </div>
+            </div>
+            <div class="flex-1 h-0.5 mx-4 bg-[var(--color-border)]"></div>
+            <!-- Upcoming: Step 3 -->
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-full bg-[var(--color-background-secondary)] border-2 border-[var(--color-border)] text-[var(--color-text-tertiary)] flex items-center justify-center">3</div>
+              <div class="ml-3">
+                <p class="text-sm text-[var(--color-text-secondary)]">Courses</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Registration Form -->
+        <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-8 border border-[var(--color-border)]">
+            <h1 class="text-2xl font-semibold text-[var(--color-text-primary)] mb-2">Student Registration</h1>
+            <p class="text-neutral-500 dark:text-neutral-dark-500 mb-4">Step 1 of 3: Personal Information</p>
+
+            <!-- Info Banner -->
+            <div class="mb-6 p-4 rounded-[var(--radius-md)] border bg-[var(--color-info-50)] border-[var(--color-info-100)]">
+              <div class="flex items-start gap-3">
+                <i data-lucide="info" class="w-5 h-5 text-[var(--color-info-600)] mt-0.5"></i>
+                <p class="text-sm text-[var(--color-info-600)]">Your information has been pre-filled from your account. Please verify and update if needed.</p>
+              </div>
+            </div>
+
+            <form id="registrationForm"
+                  hx-post="{% url 'student_registration_start' %}"
+                  hx-target="#form-errors"
+                  hx-swap="innerHTML">
+                {% csrf_token %}
+
+                <div id="form-errors" class="mb-4"></div>
+
+                <!-- Email -->
+                <div class="mb-6">
+                    <label for="id_email" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Email Address <span class="text-red-500">*</span>
+                    </label>
+                    <input type="email"
+                           name="email"
+                           id="id_email"
+                           value="{{ form.email.value|default:'' }}"
+                           {% if form.email.field.widget.attrs.readonly %}readonly{% endif %}
+                           required
+                           class="w-full h-10 px-3 rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary-600)] focus:ring-2 focus:ring-[var(--color-primary-100)] {% if form.email.field.widget.attrs.readonly %}opacity-75 cursor-not-allowed{% endif %}">
+                    {% if form.email.help_text %}
+                    <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-dark-500">{{ form.email.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- First Name -->
+                <div class="mb-6">
+                    <label for="id_first_name" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        First Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                           name="first_name"
+                           id="id_first_name"
+                           value="{{ form.first_name.value|default:'' }}"
+                           {% if form.first_name.field.widget.attrs.readonly %}readonly{% endif %}
+                           required
+                           class="w-full h-10 px-3 rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary-600)] focus:ring-2 focus:ring-[var(--color-primary-100)] {% if form.first_name.field.widget.attrs.readonly %}opacity-75 cursor-not-allowed{% endif %}">
+                </div>
+
+                <!-- Last Name -->
+                <div class="mb-6">
+                    <label for="id_last_name" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Last Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                           name="last_name"
+                           id="id_last_name"
+                           value="{{ form.last_name.value|default:'' }}"
+                           {% if form.last_name.field.widget.attrs.readonly %}readonly{% endif %}
+                           required
+                           class="w-full h-10 px-3 rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary-600)] focus:ring-2 focus:ring-[var(--color-primary-100)] {% if form.last_name.field.widget.attrs.readonly %}opacity-75 cursor-not-allowed{% endif %}">
+                </div>
+
+                <!-- Student ID -->
+                <div class="mb-8">
+                    <label for="id_student_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Student ID <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                           name="student_id"
+                           id="id_student_id"
+                           value="{{ form.student_id.value|default:'' }}"
+                           required
+                           class="w-full h-10 px-3 rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary-600)] focus:ring-2 focus:ring-[var(--color-primary-100)]">
+                    <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-dark-500">Enter your student ID if not already filled</p>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-between items-center">
+                    <a href="{% url 'student_dashboard' %}" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] flex items-center">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i>
+                        Back to Dashboard
+                    </a>
+                    <button type="submit"
+                            class="h-10 px-6 bg-[var(--color-primary-600)] text-white rounded-[var(--radius-md)] font-medium hover:bg-[var(--color-primary-700)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary-600)] transition-colors flex items-center gap-2">
+                        <span>Next Step</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('registrationForm').addEventListener('htmx:afterRequest', function(event) {
+        if (event.detail.successful) {
+            const response = JSON.parse(event.detail.xhr.response);
+            if (response.next_step) {
+                window.location.href = "{% url 'student_registration_step2' %}";
+            }
+        } else {
+            const response = JSON.parse(event.detail.xhr.response);
+            let errorHTML = '<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-800 dark:text-red-200">';
+            
+            if (response.errors) {
+                errorHTML += '<ul class="list-disc list-inside space-y-1">';
+                for (let field in response.errors) {
+                    response.errors[field].forEach(error => {
+                        errorHTML += `<li>${field}: ${error}</li>`;
+                    });
+                }
+                errorHTML += '</ul>';
+            } else if (response.error) {
+                errorHTML += response.error;
+            }
+            
+            errorHTML += '</div>';
+            document.getElementById('form-errors').innerHTML = errorHTML;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Submit Feedback{% endblock %}
+
+{% block content %}
+<div class="grid-container py-8">
+    <div class="max-w-2xl mx-auto">
+        <div class="mb-6">
+            <a href="{% url 'enhanced_student_dashboard' %}" class="text-[var(--color-primary-600)] hover:underline flex items-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Back to Dashboard
+            </a>
+        </div>
+
+        <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-8 border border-[var(--color-border)]">
+            <h1 class="text-3xl font-bold text-[var(--color-text-primary)] mb-2">Submit Session Feedback</h1>
+            <p class="text-[var(--color-text-secondary)] mb-8">Help us improve by providing feedback for your tutoring session</p>
+
+            <div class="mb-6 p-4 rounded-[var(--radius-md)] border bg-[var(--color-info-50)] border-[var(--color-info-100)]">
+                <h3 class="font-semibold text-[var(--color-info-700)] mb-2">Session Details</h3>
+                <div class="text-sm text-[var(--color-info-600)] space-y-1">
+                    <p><strong>Tutor:</strong> {{ session.tutor.get_full_name }}</p>
+                    <p><strong>Course:</strong> {{ session.course.code }} - {{ session.course.name }}</p>
+                    <p><strong>Date:</strong> {{ session.session_date|date:"F d, Y" }}</p>
+                    <p><strong>Duration:</strong> {{ session.duration }} minutes</p>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-3">
+                        Overall Rating <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex space-x-4">
+                        {% for value, label in form.fields.rating.widget.choices %}
+                        <label class="flex items-center justify-center w-12 h-12 border-2 border-[var(--color-border)] rounded-[var(--radius-md)] cursor-pointer hover:bg-[var(--color-primary-50)] transition-colors">
+                            <input type="radio" name="rating" value="{{ value }}" class="sr-only peer" required>
+                            <span class="text-lg font-semibold text-[var(--color-text-secondary)] peer-checked:text-[var(--color-primary-600)]">{{ label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-2 text-xs text-[var(--color-text-tertiary)]">1 = Poor, 5 = Excellent</p>
+                    {% if form.rating.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.rating.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-3">
+                        Satisfaction <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex space-x-4">
+                        {% for value, label in form.fields.satisfaction.widget.choices %}
+                        <label class="flex items-center justify-center w-12 h-12 border-2 border-[var(--color-border)] rounded-[var(--radius-md)] cursor-pointer hover:bg-[var(--color-primary-50)] transition-colors">
+                            <input type="radio" name="satisfaction" value="{{ value }}" class="sr-only peer" required>
+                            <span class="text-lg font-semibold text-[var(--color-text-secondary)] peer-checked:text-[var(--color-primary-600)]">{{ label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-2 text-xs text-[var(--color-text-tertiary)]">How satisfied were you with this session?</p>
+                    {% if form.satisfaction.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.satisfaction.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-3">
+                        Helpfulness <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex space-x-4">
+                        {% for value, label in form.fields.helpfulness.widget.choices %}
+                        <label class="flex items-center justify-center w-12 h-12 border-2 border-[var(--color-border)] rounded-[var(--radius-md)] cursor-pointer hover:bg-[var(--color-primary-50)] transition-colors">
+                            <input type="radio" name="helpfulness" value="{{ value }}" class="sr-only peer" required>
+                            <span class="text-lg font-semibold text-[var(--color-text-secondary)] peer-checked:text-[var(--color-primary-600)]">{{ label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-2 text-xs text-neutral-500 dark:text-neutral-dark-500">How helpful was the tutor?</p>
+                    {% if form.helpfulness.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.helpfulness.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-8">
+                    <label for="{{ form.comments.id_for_label }}" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Additional Comments (Optional)
+                    </label>
+                    {{ form.comments }}
+                    <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">Share any additional thoughts or suggestions</p>
+                    {% if form.comments.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.comments.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex justify-end space-x-4">
+                    <a href="{% url 'enhanced_student_dashboard' %}" class="h-10 px-6 border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded-[var(--radius-md)] font-medium hover:bg-[var(--color-surface-hover)] transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" class="h-10 px-6 bg-[var(--color-primary-600)] text-white rounded-[var(--radius-md)] font-medium hover:bg-[var(--color-primary-700)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary-600)] transition-colors flex items-center gap-2">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                        <span>Submit Feedback</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background-color: var(--color-surface);
+        color: var(--color-text-primary);
+        min-height: 120px;
+        transition: all 150ms ease-in-out;
+    }
+
+    textarea:focus {
+        outline: none;
+        border-color: var(--color-primary-600);
+        box-shadow: 0 0 0 2px var(--color-primary-100);
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - PAL Program{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-6xl font-bold text-neutral-900 dark:text-neutral-dark-900">Dashboard</h1>
+            <p class="text-neutral-700 dark:text-neutral-dark-700 mt-2">Welcome back, {{ user.get_full_name }}</p>
+        </div>
+        
+        <div class="flex space-x-4">
+            <a href="{% url 'create_user' %}"
+               class="inline-flex items-center px-6 py-3 bg-primary-500 dark:bg-primary-dark-500 text-white font-semibold rounded-xl hover:bg-primary-600 dark:hover:bg-primary-dark-600 transition-all transform hover:-translate-y-1 shadow-md hover:shadow-lg">
+                <i data-lucide="user-plus" class="w-5 h-5 mr-2"></i>
+                Add User
+            </a>
+        </div>
+    </div>
+    
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <!-- Total Users -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">Total Users</p>
+                    <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ stats.total_users }}</p>
+                </div>
+                <div class="p-4 bg-primary-50 dark:bg-primary-dark-50 rounded-xl">
+                    <i data-lucide="users" class="w-8 h-8 text-primary-500 dark:text-primary-dark-500"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Students -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">Students</p>
+                    <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ stats.total_students }}</p>
+                </div>
+                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                    <i data-lucide="graduation-cap" class="w-8 h-8 text-blue-500"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Tutors -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">Tutors</p>
+                    <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ stats.total_tutors }}</p>
+                </div>
+                <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                    <i data-lucide="award" class="w-8 h-8 text-green-500"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Sessions -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">Total Sessions</p>
+                    <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ stats.total_sessions }}</p>
+                </div>
+                <div class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+                    <i data-lucide="calendar" class="w-8 h-8 text-purple-500"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Recent Users -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md">
+            <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-dark-900 mb-6">Recent Users</h2>
+            
+            <div class="space-y-4">
+                {% for user_item in recent_users %}
+                <div class="flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-dark-50 rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-dark-200 transition-all">
+                    <div>
+                        <p class="font-semibold text-neutral-900 dark:text-neutral-dark-900">{{ user_item.get_full_name }}</p>
+                        <p class="text-sm text-neutral-700 dark:text-neutral-dark-700">{{ user_item.email }}</p>
+                    </div>
+                    <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                                 {% if user_item.role == 'Admin' %}bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200
+                                 {% elif user_item.role == 'Manager' %}bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200
+                                 {% elif user_item.role == 'Tutor' %}bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200
+                                 {% else %}bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-200{% endif %}">
+                        {{ user_item.role }}
+                    </span>
+                </div>
+                {% empty %}
+                <p class="text-neutral-500 dark:text-neutral-dark-500 text-center py-8">No recent users</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Pending Applications -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md">
+            <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-dark-900 mb-6">Pending Applications</h2>
+            
+            <div class="space-y-4">
+                {% for application in recent_applications %}
+                <div class="flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-dark-50 rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-dark-200 transition-all">
+                    <div>
+                        <p class="font-semibold text-neutral-900 dark:text-neutral-dark-900">{{ application.user.get_full_name }}</p>
+                        <p class="text-sm text-neutral-700 dark:text-neutral-dark-700">{{ application.program.code }} - Year {{ application.year.year_number }}</p>
+                    </div>
+                    <span class="px-3 py-1 text-xs font-semibold rounded-full
+                                 {% if application.status == 'Pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200
+                                 {% elif application.status == 'Approved' %}bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200
+                                 {% else %}bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200{% endif %}">
+                        {{ application.status }}
+                    </span>
+                </div>
+                {% empty %}
+                <p class="text-neutral-500 dark:text-neutral-dark-500 text-center py-8">No pending applications</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

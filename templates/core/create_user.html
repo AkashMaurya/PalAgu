@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+
+{% block title %}Create User - PAL Program{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="flex items-center mb-4">
+            <a href="{% url 'user_management' %}" 
+               class="text-neutral-600 dark:text-neutral-dark-600 hover:text-neutral-900 dark:hover:text-neutral-dark-900 mr-4">
+                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+            </a>
+            <div>
+                <h1 class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">Create New User</h1>
+                <p class="text-neutral-700 dark:text-neutral-dark-700 mt-2">Add a new user to the PAL Program</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl border border-neutral-200 dark:border-neutral-dark-200 shadow-md p-8"
+         x-data="{ selectedRole: '' }">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Display form errors -->
+            {% if form.errors %}
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+                <div class="flex items-start">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400 mr-2 mt-0.5"></i>
+                    <div class="text-sm text-red-800 dark:text-red-200">
+                        <p class="font-semibold mb-2">Please correct the following errors:</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                <li><strong>{{ field|title }}:</strong> {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Personal Information Section -->
+            <div class="space-y-6">
+                <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-dark-900 border-b border-neutral-300 dark:border-neutral-dark-300 pb-2">
+                    Personal Information
+                </h2>
+
+                <!-- Email -->
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Email Address <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.email.errors.0 }}
+                    </p>
+                    {% endif %}
+                    {% if form.email.help_text %}
+                    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-dark-500">
+                        {{ form.email.help_text }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- First Name and Last Name -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                            First Name <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                            {{ form.first_name.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                            Last Name <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                            {{ form.last_name.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role and Access Section -->
+            <div class="space-y-6">
+                <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-dark-900 border-b border-neutral-300 dark:border-neutral-dark-300 pb-2">
+                    Role and Access
+                </h2>
+
+                <!-- Role -->
+                <div>
+                    <label for="{{ form.role.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Role <span class="text-red-500">*</span>
+                    </label>
+                    <select name="role" id="id_role"
+                            class="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-dark-300 rounded-lg bg-neutral-50 dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 focus:border-transparent"
+                            x-model="selectedRole" required>
+                        <option value="">Select Role</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Student">Student</option>
+                        <option value="Tutor">Tutor</option>
+                    </select>
+                    {% if form.role.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.role.errors.0 }}
+                    </p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-dark-500">
+                        Select the user's role in the system
+                    </p>
+                </div>
+
+                <!-- Student ID -->
+                <div>
+                    <label for="{{ form.student_id.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Student ID <span class="text-neutral-500 text-xs" x-show="selectedRole === 'Student'">(Required for Students)</span>
+                    </label>
+                    {{ form.student_id }}
+                    {% if form.student_id.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.student_id.errors.0 }}
+                    </p>
+                    {% endif %}
+                    {% if form.student_id.help_text %}
+                    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-dark-500">
+                        {{ form.student_id.help_text }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Student-specific fields (Program and Year) -->
+                <div x-show="selectedRole === 'Student'" x-transition class="space-y-6 border-t border-neutral-300 dark:border-neutral-dark-300 pt-6">
+                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-dark-900">
+                        Student Academic Information
+                    </h3>
+
+                    <!-- Program -->
+                    <div>
+                        <label for="{{ form.program.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                            Program <span class="text-red-500">*</span>
+                        </label>
+                        <select name="program" id="id_program"
+                                class="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-dark-300 rounded-lg bg-neutral-50 dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 focus:border-transparent"
+                                onchange="loadYears(this.value)">
+                            <option value="">Select Program</option>
+                            {% for program in programs %}
+                            <option value="{{ program.id }}">{{ program.code }} ({{ program.name }})</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.program.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                            {{ form.program.errors.0 }}
+                        </p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-dark-500">
+                            Select the student's academic program
+                        </p>
+                    </div>
+
+                    <!-- Year -->
+                    <div>
+                        <label for="{{ form.year.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                            Year <span class="text-red-500">*</span>
+                        </label>
+                        <select name="year" id="id_year"
+                                class="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-dark-300 rounded-lg bg-neutral-50 dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 focus:border-transparent">
+                            <option value="">Select Program First</option>
+                        </select>
+                        {% if form.year.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                            {{ form.year.errors.0 }}
+                        </p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-dark-500">
+                            Select the student's current year of study
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Section -->
+            <div class="space-y-6">
+                <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-dark-900 border-b border-neutral-300 dark:border-neutral-dark-300 pb-2">
+                    Password
+                </h2>
+
+                <!-- Password -->
+                <div>
+                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Password <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.password.errors.0 }}
+                    </p>
+                    {% endif %}
+                    {% if form.password.help_text %}
+                    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-dark-500">
+                        {{ form.password.help_text }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label for="{{ form.password_confirm.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Confirm Password <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.password_confirm }}
+                    {% if form.password_confirm.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.password_confirm.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-end space-x-4 pt-6 border-t border-neutral-300 dark:border-neutral-dark-300">
+                <a href="{% url 'user_management' %}" 
+                   class="px-6 py-3 bg-neutral-200 dark:bg-neutral-dark-200 text-neutral-900 dark:text-neutral-dark-900 font-semibold rounded-xl hover:bg-neutral-300 dark:hover:bg-neutral-dark-300 transition-all">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-6 py-3 bg-primary-500 dark:bg-primary-dark-500 text-white font-semibold rounded-xl hover:bg-primary-600 dark:hover:bg-primary-dark-600 transition-all transform hover:-translate-y-1 shadow-md hover:shadow-lg">
+                    <i data-lucide="user-plus" class="w-5 h-5 inline mr-2"></i>
+                    Create User
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Card -->
+    <div class="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+        <div class="flex items-start">
+            <i data-lucide="info" class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3 mt-0.5"></i>
+            <div class="text-sm text-blue-800 dark:text-blue-200">
+                <p class="font-semibold mb-2">Role Descriptions:</p>
+                <ul class="list-disc list-inside space-y-1 ml-2">
+                    <li><strong>Admin:</strong> Full system access, can manage all users and settings (Student ID optional)</li>
+                    <li><strong>Manager:</strong> Can view analytics and reports (read-only, Student ID optional)</li>
+                    <li><strong>Student:</strong> Can register for tutoring sessions and provide feedback (Student ID, Program, and Year required)</li>
+                    <li><strong>Tutor:</strong> Can create sessions and help students (Student ID optional)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadYears(programId) {
+    const yearSelect = document.getElementById('id_year');
+
+    if (!programId) {
+        yearSelect.innerHTML = '<option value="">Select Program First</option>';
+        return;
+    }
+
+    // Show loading state
+    yearSelect.innerHTML = '<option value="">Loading...</option>';
+
+    // Fetch years for the selected program
+    fetch('{% url "get_years_by_program" %}?program=' + programId)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(html => {
+            yearSelect.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading years:', error);
+            yearSelect.innerHTML = '<option value="">Error loading years</option>';
+        });
+}
+</script>
+{% endblock %}
+

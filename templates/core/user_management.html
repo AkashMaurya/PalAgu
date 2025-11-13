@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}User Management - PAL Program{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">User Management</h1>
+            <p class="text-neutral-700 dark:text-neutral-dark-700 mt-2">Manage students, tutors, and administrators</p>
+        </div>
+        
+        <div class="flex space-x-4">
+            <button onclick="document.getElementById('bulkUploadModal').classList.remove('hidden')"
+                    class="inline-flex items-center px-6 py-3 bg-neutral-100 dark:bg-neutral-dark-100 border-2 border-neutral-300 dark:border-neutral-dark-300 text-neutral-900 dark:text-neutral-dark-900 font-semibold rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-dark-200 transition-all">
+                <i data-lucide="upload" class="w-5 h-5 mr-2"></i>
+                Bulk Upload
+            </button>
+            <a href="{% url 'create_user' %}"
+               class="inline-flex items-center px-6 py-3 bg-primary-500 dark:bg-primary-dark-500 text-white font-semibold rounded-xl hover:bg-primary-600 dark:hover:bg-primary-dark-600 transition-all transform hover:-translate-y-1 shadow-md hover:shadow-lg">
+                <i data-lucide="user-plus" class="w-5 h-5 mr-2"></i>
+                Add User
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filter Bar -->
+    <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-6 mb-8 border border-neutral-200 dark:border-neutral-dark-200">
+        <form method="get" class="flex flex-wrap gap-4">
+            <!-- Role Filter -->
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">Filter by Role</label>
+                <select name="role" 
+                        class="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-dark-300 bg-white dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                    <option value="">All Roles</option>
+                    <option value="Admin" {% if role_filter == 'Admin' %}selected{% endif %}>Admin</option>
+                    <option value="Manager" {% if role_filter == 'Manager' %}selected{% endif %}>Manager</option>
+                    <option value="Student" {% if role_filter == 'Student' %}selected{% endif %}>Student</option>
+                    <option value="Tutor" {% if role_filter == 'Tutor' %}selected{% endif %}>Tutor</option>
+                </select>
+            </div>
+            
+            <!-- Search -->
+            <div class="flex-1 min-w-[300px]">
+                <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">Search</label>
+                <input type="text" 
+                       name="search" 
+                       value="{{ search }}"
+                       placeholder="Search by name, email, or student ID..."
+                       class="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-dark-300 bg-white dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 placeholder-neutral-500 dark:placeholder-neutral-dark-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+            </div>
+            
+            <div class="flex items-end">
+                <button type="submit" 
+                        class="px-6 py-3 bg-primary-500 dark:bg-primary-dark-500 text-white font-semibold rounded-xl hover:bg-primary-600 dark:hover:bg-primary-dark-600 transition-all">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- User Table -->
+    <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl border border-neutral-200 dark:border-neutral-dark-200 shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-neutral-200 dark:divide-neutral-dark-200">
+                <thead class="bg-neutral-50 dark:bg-neutral-dark-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-700 dark:text-neutral-dark-700 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-700 dark:text-neutral-dark-700 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-700 dark:text-neutral-dark-700 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-700 dark:text-neutral-dark-700 uppercase tracking-wider">Student ID</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-700 dark:text-neutral-dark-700 uppercase tracking-wider">Created</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-neutral-700 dark:text-neutral-dark-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-neutral-100 dark:bg-neutral-dark-100 divide-y divide-neutral-200 dark:divide-neutral-dark-200">
+                    {% for user_item in users %}
+                    <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-dark-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-semibold text-neutral-900 dark:text-neutral-dark-900">{{ user_item.get_full_name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-neutral-700 dark:text-neutral-dark-700">{{ user_item.email }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                         {% if user_item.role == 'Admin' %}bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200
+                                         {% elif user_item.role == 'Manager' %}bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200
+                                         {% elif user_item.role == 'Tutor' %}bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200
+                                         {% else %}bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-200{% endif %}">
+                                {{ user_item.role }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-700 dark:text-neutral-dark-700">
+                            {{ user_item.student_id|default:"-" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-700 dark:text-neutral-dark-700">
+                            {{ user_item.created_at|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <a href="{% url 'edit_user' user_item.id %}"
+                               class="text-primary-500 dark:text-primary-dark-500 hover:text-primary-600 dark:hover:text-primary-dark-600 inline-block"
+                               title="Edit user">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </a>
+                            <a href="{% url 'delete_user' user_item.id %}"
+                               class="text-red-500 hover:text-red-600 inline-block"
+                               title="Delete user">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-neutral-500 dark:text-neutral-dark-500">
+                            No users found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if users.has_other_pages %}
+        <div class="bg-neutral-50 dark:bg-neutral-dark-50 px-6 py-4 flex items-center justify-between border-t border-neutral-200 dark:border-neutral-dark-200">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if users.has_previous %}
+                <a href="?page={{ users.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-neutral-300 dark:border-neutral-dark-300 text-sm font-medium rounded-md text-neutral-700 dark:text-neutral-dark-700 bg-white dark:bg-neutral-dark-100 hover:bg-neutral-50 dark:hover:bg-neutral-dark-50">
+                    Previous
+                </a>
+                {% endif %}
+                {% if users.has_next %}
+                <a href="?page={{ users.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-neutral-300 dark:border-neutral-dark-300 text-sm font-medium rounded-md text-neutral-700 dark:text-neutral-dark-700 bg-white dark:bg-neutral-dark-100 hover:bg-neutral-50 dark:hover:bg-neutral-dark-50">
+                    Next
+                </a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-neutral-700 dark:text-neutral-dark-700">
+                        Showing page <span class="font-medium">{{ users.number }}</span> of <span class="font-medium">{{ users.paginator.num_pages }}</span>
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {% if users.has_previous %}
+                        <a href="?page={{ users.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-neutral-300 dark:border-neutral-dark-300 bg-white dark:bg-neutral-dark-100 text-sm font-medium text-neutral-500 dark:text-neutral-dark-500 hover:bg-neutral-50 dark:hover:bg-neutral-dark-50">
+                            Previous
+                        </a>
+                        {% endif %}
+                        {% if users.has_next %}
+                        <a href="?page={{ users.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-neutral-300 dark:border-neutral-dark-300 bg-white dark:bg-neutral-dark-100 text-sm font-medium text-neutral-500 dark:text-neutral-dark-500 hover:bg-neutral-50 dark:hover:bg-neutral-dark-50">
+                            Next
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Bulk Upload Modal -->
+<div id="bulkUploadModal" class="hidden fixed inset-0 z-50 overflow-y-auto" x-data="{ uploading: false, result: null }">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black opacity-50" onclick="document.getElementById('bulkUploadModal').classList.add('hidden')"></div>
+        
+        <div class="relative bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl max-w-2xl w-full p-8 shadow-2xl border border-neutral-200 dark:border-neutral-dark-200">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-dark-900">Bulk Upload Users</h2>
+                <button onclick="document.getElementById('bulkUploadModal').classList.add('hidden')" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-dark-500 dark:hover:text-neutral-dark-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-neutral-700 dark:text-neutral-dark-700 mb-4">Upload an Excel file (.xlsx) with the following columns:</p>
+                <ul class="list-disc list-inside text-sm text-neutral-600 dark:text-neutral-dark-600 mb-4 space-y-1">
+                    <li><strong>email</strong> (required) - User's email address</li>
+                    <li><strong>first_name</strong> (required) - First name</li>
+                    <li><strong>last_name</strong> (required) - Last name</li>
+                    <li><strong>role</strong> (required) - One of: Admin, Manager, Student, Tutor</li>
+                    <li><strong>student_id</strong> (required for Student only) - Student ID number</li>
+                    <li><strong>password</strong> (optional) - Default: changeme123</li>
+                </ul>
+
+                <form id="bulkUploadForm"
+                      hx-post="{% url 'bulk_upload_users' %}" 
+                      hx-encoding="multipart/form-data"
+                      @htmx:after-request="uploading = false; result = JSON.parse($event.detail.xhr.response)"
+                      class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">Select File</label>
+                        <input type="file" 
+                               name="file" 
+                               accept=".xlsx,.xls"
+                               required
+                               class="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-dark-300 bg-white dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 dark:file:bg-primary-dark-50 file:text-primary-600 dark:file:text-primary-dark-600 hover:file:bg-primary-100 dark:hover:file:bg-primary-dark-100">
+                    </div>
+                    
+                    <button type="submit" 
+                            @click="uploading = true"
+                            :disabled="uploading"
+                            class="w-full bg-primary-500 dark:bg-primary-dark-500 text-white font-semibold py-3 px-4 rounded-xl hover:bg-primary-600 dark:hover:bg-primary-dark-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 transition-all disabled:opacity-50">
+                        <span x-show="!uploading">Upload File</span>
+                        <span x-show="uploading">Uploading...</span>
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Result Display -->
+            <div x-show="result" class="mt-6 p-4 rounded-xl" :class="result && result.success ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'">
+                <div x-show="result && result.success">
+                    <p class="font-semibold text-green-800 dark:text-green-200">Upload successful!</p>
+                    <p class="text-sm text-green-700 dark:text-green-300 mt-1">
+                        Successfully created <span x-text="result.success_count"></span> users.
+                        <span x-show="result.error_count > 0">
+                            <span x-text="result.error_count"></span> errors occurred.
+                        </span>
+                    </p>
+                </div>
+                <div x-show="result && result.error">
+                    <p class="font-semibold text-red-800 dark:text-red-200">Upload failed</p>
+                    <p class="text-sm text-red-700 dark:text-red-300 mt-1" x-text="result.error"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

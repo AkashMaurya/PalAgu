@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Registration - Step 2{% endblock %}
+
+{% block content %}
+<div class="grid-container py-8">
+    <div class="max-w-2xl mx-auto">
+        <!-- Stepper -->
+        <div class="mb-8">
+          <div class="flex items-center">
+            <!-- Completed: Step 1 -->
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-full bg-[var(--color-success-500)] text-white flex items-center justify-center">
+                <i data-lucide="check" class="w-5 h-5"></i>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-[var(--color-text-secondary)]">Personal Info</p>
+              </div>
+            </div>
+            <div class="flex-1 h-0.5 mx-4 bg-[var(--color-primary-100)]"></div>
+            <!-- Current: Step 2 -->
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-full bg-[var(--color-primary-600)] text-white flex items-center justify-center ring-4 ring-[var(--color-primary-100)]">2</div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-[var(--color-text-primary)]">Program</p>
+              </div>
+            </div>
+            <div class="flex-1 h-0.5 mx-4 bg-[var(--color-border)]"></div>
+            <!-- Upcoming: Step 3 -->
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-full bg-[var(--color-background-secondary)] border-2 border-[var(--color-border)] text-[var(--color-text-tertiary)] flex items-center justify-center">3</div>
+              <div class="ml-3">
+                <p class="text-sm text-[var(--color-text-secondary)]">Courses</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Registration Form -->
+        <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-8 border border-[var(--color-border)]">
+            <h1 class="text-2xl font-semibold text-[var(--color-text-primary)] mb-2">Student Registration</h1>
+            <p class="text-neutral-500 dark:text-neutral-dark-500 mb-8">Step 2 of 3: Select Your Program</p>
+
+            {% if student_profile %}
+            <div class="mb-6 p-4 rounded-[var(--radius-md)] border bg-[var(--color-info-50)] border-[var(--color-info-100)]">
+              <div class="flex items-start gap-3">
+                <i data-lucide="info" class="w-5 h-5 text-[var(--color-info-600)] mt-0.5"></i>
+                <div class="text-sm text-[var(--color-info-600)]">
+                  <p class="font-semibold">Your program and year have been pre-filled from your profile.</p>
+                  <p class="mt-1">You can change them if needed, or click "Next" to continue.</p>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            <form id="registrationForm"
+                  hx-post="{% url 'student_registration_step2' %}"
+                  hx-target="#form-errors"
+                  hx-swap="innerHTML">
+                {% csrf_token %}
+
+                <div id="form-errors" class="mb-4"></div>
+
+                <!-- Program -->
+                <div class="mb-6">
+                    <label for="id_program" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Program <span class="text-red-500">*</span>
+                    </label>
+                    <select name="program"
+                            id="id_program"
+                            required
+                            hx-get="{% url 'get_years_for_program' %}"
+                            hx-target="#year-select-container"
+                            hx-trigger="change"
+                            hx-swap="innerHTML"
+                            hx-include="[name='program']"
+                            hx-vals='js:{"program_id": document.getElementById("id_program").value}'
+                            class="w-full h-10 px-3 rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary-600)] focus:ring-2 focus:ring-[var(--color-primary-100)]">
+                        <option value="">Select Program</option>
+                        {% for program in programs %}
+                        <option value="{{ program.id }}" {% if form.program.value == program.id %}selected{% endif %}>{{ program.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Year (dynamically loaded) -->
+                <div id="year-select-container" class="mb-6">
+                    <label for="id_year" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Year <span class="text-red-500">*</span>
+                    </label>
+                    <select name="year" 
+                            id="id_year"
+                            required
+                            disabled
+                            class="w-full h-10 px-3 rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary-600)] focus:ring-2 focus:ring-[var(--color-primary-100)] opacity-50">
+                        <option value="">Select Program First</option>
+                    </select>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-between items-center">
+                    <a href="{% url 'student_registration_start' %}"
+                       class="h-10 px-6 border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded-[var(--radius-md)] font-medium hover:bg-[var(--color-surface-hover)] transition-colors flex items-center gap-2">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span>Back</span>
+                    </a>
+                    <button type="submit"
+                            class="h-10 px-6 bg-[var(--color-primary-600)] text-white rounded-[var(--radius-md)] font-medium hover:bg-[var(--color-primary-700)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary-600)] transition-colors flex items-center gap-2">
+                        <span>Next Step</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle year loading
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target.id === 'year-select-container') {
+            const response = JSON.parse(event.detail.xhr.response);
+            let yearHTML = '<label for="id_year" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">Year <span class="text-red-500">*</span></label>';
+            yearHTML += '<select name="year" id="id_year" required class="w-full h-10 px-3 rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary-600)] focus:ring-2 focus:ring-[var(--color-primary-100)]">';
+            
+            if (response.years && response.years.length > 0) {
+                yearHTML += '<option value="">Select Year</option>';
+                response.years.forEach(year => {
+                    yearHTML += `<option value="${year.id}">${year.name}</option>`;
+                });
+            } else {
+                yearHTML += '<option value="">No years available</option>';
+            }
+            
+            yearHTML += '</select>';
+            event.detail.target.innerHTML = yearHTML;
+        }
+    });
+
+    // Handle form submission
+    document.getElementById('registrationForm').addEventListener('htmx:afterRequest', function(event) {
+        if (event.detail.successful) {
+            const response = JSON.parse(event.detail.xhr.response);
+            if (response.next_step) {
+                window.location.href = "{% url 'student_registration_step3' %}";
+            }
+        } else {
+            const response = JSON.parse(event.detail.xhr.response);
+            let errorHTML = '<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-800 dark:text-red-200">';
+            
+            if (response.errors) {
+                errorHTML += '<ul class="list-disc list-inside space-y-1">';
+                for (let field in response.errors) {
+                    response.errors[field].forEach(error => {
+                        errorHTML += `<li>${field}: ${error}</li>`;
+                    });
+                }
+                errorHTML += '</ul>';
+            } else if (response.error) {
+                errorHTML += response.error;
+            }
+            
+            errorHTML += '</div>';
+            document.getElementById('form-errors').innerHTML = errorHTML;
+        }
+    });
+
+    // Auto-load years if program is pre-selected
+    document.addEventListener('DOMContentLoaded', function() {
+        const programSelect = document.getElementById('id_program');
+        const selectedProgramId = programSelect.value;
+
+        if (selectedProgramId) {
+            // Trigger HTMX to load years for the pre-selected program
+            htmx.trigger(programSelect, 'change');
+
+            // After a short delay, set the pre-selected year
+            setTimeout(function() {
+                const yearSelect = document.getElementById('id_year');
+                const preSelectedYear = '{{ form.year.value|default:"" }}';
+                if (preSelectedYear && yearSelect) {
+                    yearSelect.value = preSelectedYear;
+                    yearSelect.disabled = false;
+                    yearSelect.classList.remove('opacity-50');
+                }
+            }, 500);
+        }
+    });
+</script>
+{% endblock %}

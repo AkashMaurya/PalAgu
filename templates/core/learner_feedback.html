@@ -1,0 +1,464 @@
+{% extends 'base.html' %}
+
+{% block title %}Learner Feedback - PAL Program{% endblock %}
+
+{% block content %}
+<div class="grid-container py-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <a href="{% url 'student_dashboard' %}" class="text-[var(--color-primary-600)] hover:underline flex items-center mb-4">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Back to Dashboard
+            </a>
+            <h1 class="text-4xl font-bold text-[var(--color-text-primary)] mb-2">Learner Feedback Form</h1>
+            <p class="text-[var(--color-text-secondary)]">Share your experience with your PAL tutor</p>
+        </div>
+
+        <!-- Student Information -->
+        <div class="mb-8 p-6 rounded-[var(--radius-lg)] border bg-[var(--color-info-50)] border-[var(--color-info-100)]">
+            <h3 class="text-lg font-semibold text-[var(--color-info-700)] mb-4 flex items-center">
+                <i data-lucide="user" class="w-5 h-5 mr-2"></i>
+                Your Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-[var(--color-info-600)]">
+                <div>
+                    <p class="font-medium">Name:</p>
+                    <p>{{ request.user.get_full_name }}</p>
+                </div>
+                <div>
+                    <p class="font-medium">Student ID:</p>
+                    <p>{{ request.user.student_id|default:"N/A" }}</p>
+                </div>
+                <div>
+                    <p class="font-medium">Email:</p>
+                    <p>{{ request.user.email }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Form -->
+        <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-8 border border-[var(--color-border)]">
+            <form method="post" class="space-y-8">
+                {% csrf_token %}
+
+                <!-- Display form errors -->
+                {% if form.errors %}
+                <div class="bg-[var(--color-error-50)] border border-[var(--color-error-200)] rounded-[var(--radius-md)] p-4">
+                    <div class="flex items-start">
+                        <i data-lucide="alert-circle" class="w-5 h-5 text-[var(--color-error-600)] mr-2 mt-0.5"></i>
+                        <div class="text-sm text-[var(--color-error-700)]">
+                            <p class="font-semibold mb-2">Please correct the following errors:</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                    <li><strong>{{ field|title }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Student Academic Information Section -->
+                <div class="space-y-6" x-data="programYearFilter()">
+                    <h2 class="text-2xl font-semibold text-[var(--color-text-primary)] border-b border-[var(--color-border)] pb-2">
+                        Your Academic Information
+                    </h2>
+
+                    <!-- Program -->
+                    <div>
+                        <label for="id_program" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+                            {{ form.program.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <select name="program" id="id_program" x-model="selectedProgram" @change="filterYears()" required
+                                class="w-full h-10 px-3 rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary-600)] focus:ring-2 focus:ring-[var(--color-primary-100)]">
+                            <option value="">Select your program</option>
+                            {% for program in form.program.field.queryset %}
+                            <option value="{{ program.id }}" {% if form.program.value == program.id %}selected{% endif %}>{{ program.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Year -->
+                    <div>
+                        <label for="id_year" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+                            {{ form.year.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <select name="year" id="id_year" x-model="selectedYear" required
+                                class="w-full h-10 px-3 rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary-600)] focus:ring-2 focus:ring-[var(--color-primary-100)]">
+                            <option value="">Select your year</option>
+                            <template x-for="year in filteredYears" :key="year.id">
+                                <option :value="year.id" x-text="year.program_code + ' - ' + year.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Session Information Section -->
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-semibold text-[var(--color-text-primary)] border-b border-[var(--color-border)] pb-2">
+                        Session Information
+                    </h2>
+
+                    <!-- Tutor (Searchable Dropdown) -->
+                    <div x-data="tutorSearch()" class="relative">
+                        <label for="tutor-search" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+                            {{ form.tutor.label }} <span class="text-red-500">*</span>
+                        </label>
+
+                        <!-- Search Input -->
+                        <div class="relative">
+                            <input
+                                type="text"
+                                id="tutor-search"
+                                x-model="searchQuery"
+                                @click="showDropdown = true"
+                                @input="showDropdown = true"
+                                placeholder="Search tutor by name..."
+                                class="w-full h-10 px-3 pr-10 rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary-600)] focus:ring-2 focus:ring-[var(--color-primary-100)]"
+                                autocomplete="off"
+                            />
+                            <i data-lucide="search" class="w-5 h-5 text-neutral-400 absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none"></i>
+                        </div>
+
+                        <!-- Hidden Select (actual form field) -->
+                        <select name="tutor" id="id_tutor" x-model="selectedTutor" class="hidden" required>
+                            <option value="">Select a tutor</option>
+                            {% for tutor in form.tutor.field.queryset %}
+                            <option value="{{ tutor.id }}">{{ tutor.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <!-- Dropdown List -->
+                        <div
+                            x-show="showDropdown && filteredTutors.length > 0"
+                            @click.away="showDropdown = false"
+                            x-transition
+                            class="absolute z-10 w-full mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] shadow-[var(--shadow-md)] max-h-60 overflow-y-auto"
+                        >
+                            <template x-for="tutor in filteredTutors" :key="tutor.id">
+                                <div
+                                    @click="selectTutor(tutor)"
+                                    class="px-4 py-3 hover:bg-[var(--color-primary-50)] cursor-pointer border-b border-[var(--color-border)] last:border-b-0"
+                                    :class="{'bg-[var(--color-primary-50)]': selectedTutor == tutor.id}"
+                                >
+                                    <p class="font-medium text-[var(--color-text-primary)]" x-text="tutor.name"></p>
+                                    <p class="text-xs text-[var(--color-text-tertiary)]" x-text="'ID: ' + tutor.id"></p>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- No results message -->
+                        <div
+                            x-show="showDropdown && searchQuery.length > 0 && filteredTutors.length === 0"
+                            @click.away="showDropdown = false"
+                            class="absolute z-10 w-full mt-1 bg-white dark:bg-neutral-dark-100 border border-neutral-300 dark:border-neutral-dark-300 rounded-lg shadow-lg p-4"
+                        >
+                            <p class="text-sm text-neutral-500 dark:text-neutral-dark-500 text-center">No tutors found matching "{{ searchQuery }}"</p>
+                        </div>
+
+                        <!-- Selected tutor display -->
+                        <div x-show="selectedTutor" class="mt-2 p-3 rounded-[var(--radius-md)] border bg-[var(--color-success-50)] border-[var(--color-success-100)]">
+                            <p class="text-sm text-[var(--color-success-700)]">
+                                <i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>
+                                <strong>Selected:</strong> <span x-text="selectedTutorName"></span>
+                            </p>
+                        </div>
+
+                        {% if form.tutor.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.tutor.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">Search and select the tutor who conducted the session</p>
+                    </div>
+
+                    <!-- Topic -->
+                    <div>
+                        <label for="{{ form.topic.id_for_label }}" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+                            {{ form.topic.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.topic }}
+                        {% if form.topic.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.topic.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Duration -->
+                    <div>
+                        <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-3">
+                            {{ form.duration.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <div class="space-y-2">
+                            {% for radio in form.duration %}
+                            <label class="flex items-center p-3 border border-[var(--color-border)] rounded-[var(--radius-md)] hover:bg-[var(--color-surface-hover)] cursor-pointer transition-colors">
+                                {{ radio.tag }}
+                                <span class="ml-3 text-[var(--color-text-primary)]">{{ radio.choice_label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.duration.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.duration.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Ratings Section -->
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-semibold text-[var(--color-text-primary)] border-b border-[var(--color-border)] pb-2">
+                        Rate Your Experience
+                    </h2>
+
+                    <!-- Explanation Rating -->
+                    <div>
+                        <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-3">
+                            {{ form.explanation_rating.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <div class="flex space-x-4">
+                            {% for radio in form.explanation_rating %}
+                            <label class="flex flex-col items-center p-4 border-2 border-[var(--color-border)] rounded-[var(--radius-md)] hover:border-[var(--color-primary-600)] cursor-pointer transition-all">
+                                {{ radio.tag }}
+                                <span class="mt-2 text-2xl font-bold text-[var(--color-text-primary)]">{{ radio.choice_label }}</span>
+                                <span class="text-xs text-[var(--color-text-tertiary)] mt-1">
+                                    {% if forloop.counter == 1 %}Poor{% elif forloop.counter == 3 %}Average{% elif forloop.counter == 5 %}Excellent{% endif %}
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.explanation_rating.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.explanation_rating.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Usefulness Rating -->
+                    <div>
+                        <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-3">
+                            {{ form.usefulness_rating.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <div class="flex space-x-4">
+                            {% for radio in form.usefulness_rating %}
+                            <label class="flex flex-col items-center p-4 border-2 border-[var(--color-border)] rounded-[var(--radius-md)] hover:border-[var(--color-primary-600)] cursor-pointer transition-all">
+                                {{ radio.tag }}
+                                <span class="mt-2 text-2xl font-bold text-[var(--color-text-primary)]">{{ radio.choice_label }}</span>
+                                <span class="text-xs text-[var(--color-text-tertiary)] mt-1">
+                                    {% if forloop.counter == 1 %}Poor{% elif forloop.counter == 3 %}Average{% elif forloop.counter == 5 %}Excellent{% endif %}
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.usefulness_rating.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.usefulness_rating.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Attend Again -->
+                    <div>
+                        <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-3">
+                            {{ form.attend_again.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <div class="flex space-x-4">
+                            {% for radio in form.attend_again %}
+                            <label class="flex items-center p-4 border-2 border-[var(--color-border)] rounded-[var(--radius-md)] hover:border-[var(--color-primary-600)] cursor-pointer transition-all flex-1">
+                                {{ radio.tag }}
+                                <span class="ml-3 text-lg font-medium text-[var(--color-text-primary)]">{{ radio.choice_label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.attend_again.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.attend_again.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Well Organized -->
+                    <div>
+                        <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-3">
+                            {{ form.well_organized.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <div class="flex space-x-4">
+                            {% for radio in form.well_organized %}
+                            <label class="flex items-center p-4 border-2 border-[var(--color-border)] rounded-[var(--radius-md)] hover:border-[var(--color-primary-600)] cursor-pointer transition-all flex-1">
+                                {{ radio.tag }}
+                                <span class="ml-3 text-lg font-medium text-[var(--color-text-primary)]">{{ radio.choice_label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.well_organized.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.well_organized.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Comments Section -->
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-semibold text-[var(--color-text-primary)] border-b border-[var(--color-border)] pb-2">
+                        Additional Feedback
+                    </h2>
+
+                    <!-- Comments -->
+                    <div>
+                        <label for="{{ form.comments.id_for_label }}" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
+                            {{ form.comments.label }}
+                        </label>
+                        {{ form.comments }}
+                        {% if form.comments.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.comments.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-dark-500">Share any suggestions for improvement</p>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex justify-end gap-4 pt-6 border-t border-[var(--color-border)]">
+                    <a href="{% url 'student_dashboard' %}"
+                       class="h-10 px-6 border border-[var(--color-border)] text-[var(--color-text-secondary)] rounded-[var(--radius-md)] font-medium hover:bg-[var(--color-surface-hover)] transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="h-10 px-6 bg-[var(--color-primary-600)] text-white rounded-[var(--radius-md)] font-medium hover:bg-[var(--color-primary-700)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary-600)] transition-colors flex items-center gap-2">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                        <span>Submit Feedback</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info Box -->
+        <div class="mt-8 rounded-[var(--radius-lg)] p-6 border bg-[var(--color-surface)] border-[var(--color-border)]">
+            <div class="flex items-start">
+                <i data-lucide="info" class="w-5 h-5 text-[var(--color-primary-600)] mr-3 mt-0.5"></i>
+                <div class="text-sm text-[var(--color-text-secondary)]">
+                    <p class="font-semibold mb-2 text-[var(--color-text-primary)]">Your feedback helps us improve!</p>
+                    <p>Your responses will be used to enhance the PAL program and recognize outstanding tutors. All feedback is confidential and will be used for program improvement purposes only.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom radio button styling */
+input[type="radio"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-border);
+    border-radius: 50%;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+}
+
+input[type="radio"]:checked {
+    border-color: var(--color-primary-600);
+    background-color: var(--color-primary-600);
+}
+
+input[type="radio"]:checked::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ffffff;
+}
+
+input[type="radio"]:checked + span {
+    color: var(--color-primary-600);
+    font-weight: 600;
+}
+
+label:has(input[type="radio"]:checked) {
+    border-color: var(--color-primary-600) !important;
+    background-color: var(--color-primary-50);
+}
+</style>
+
+<script>
+function programYearFilter() {
+    return {
+        selectedProgram: '{{ form.program.value|default:"" }}',
+        selectedYear: '{{ form.year.value|default:"" }}',
+        allYears: [
+            {% for year in form.year.field.queryset %}
+            {
+                id: {{ year.id }},
+                name: '{{ year.name|escapejs }}',
+                program_id: {{ year.program.id }},
+                program_code: '{{ year.program.code|escapejs }}'
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        filteredYears: [],
+
+        init() {
+            // Initialize filtered years on page load
+            this.filterYears();
+        },
+
+        filterYears() {
+            if (!this.selectedProgram) {
+                // If no program selected, show all years
+                this.filteredYears = this.allYears;
+            } else {
+                // Filter years by selected program
+                this.filteredYears = this.allYears.filter(year =>
+                    year.program_id == this.selectedProgram
+                );
+            }
+
+            // Reset year selection if current year is not in filtered list
+            if (this.selectedYear) {
+                const yearExists = this.filteredYears.some(year => year.id == this.selectedYear);
+                if (!yearExists) {
+                    this.selectedYear = '';
+                }
+            }
+        }
+    }
+}
+
+function tutorSearch() {
+    return {
+        searchQuery: '',
+        selectedTutor: '',
+        selectedTutorName: '',
+        showDropdown: false,
+        tutors: [
+            {% for tutor in form.tutor.field.queryset %}
+            {
+                id: {{ tutor.id }},
+                name: '{{ tutor.get_full_name|escapejs }}',
+                firstName: '{{ tutor.first_name|escapejs }}',
+                lastName: '{{ tutor.last_name|escapejs }}'
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+
+        get filteredTutors() {
+            if (!this.searchQuery) {
+                return this.tutors;
+            }
+
+            const query = this.searchQuery.toLowerCase();
+            return this.tutors.filter(tutor => {
+                // Search by full name, first name, or last name
+                return tutor.name.toLowerCase().includes(query) ||
+                       tutor.firstName.toLowerCase().includes(query) ||
+                       tutor.lastName.toLowerCase().includes(query);
+            });
+        },
+
+        selectTutor(tutor) {
+            this.selectedTutor = tutor.id;
+            this.selectedTutorName = tutor.name;
+            this.searchQuery = tutor.name;
+            this.showDropdown = false;
+        }
+    }
+}
+</script>
+{% endblock %}
+

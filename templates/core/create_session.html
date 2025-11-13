@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Session{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto">
+        <div class="mb-6">
+            <a href="{% url 'enhanced_student_dashboard' %}" class="text-primary-500 dark:text-primary-dark-500 hover:underline flex items-center">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Back to Dashboard
+            </a>
+        </div>
+
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-lg shadow-lg p-8 border border-neutral-200 dark:border-neutral-dark-200">
+            <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-dark-900 mb-2">Create New Session</h1>
+            <p class="text-neutral-600 dark:text-neutral-dark-600 mb-8">Schedule a tutoring session with a student</p>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-6">
+                    <label for="{{ form.learner.id_for_label }}" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Student <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.learner }}
+                    {% if form.learner.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.learner.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-6">
+                    <label for="{{ form.course.id_for_label }}" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Course <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.course }}
+                    {% if form.course.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.course.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-6">
+                    <label for="{{ form.session_date.id_for_label }}" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Session Date & Time <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.session_date }}
+                    {% if form.session_date.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.session_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-6">
+                    <label for="{{ form.duration.id_for_label }}" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Duration (minutes) <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.duration }}
+                    {% if form.duration.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.duration.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-8">
+                    <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Notes (Optional)
+                    </label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.notes.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex justify-end space-x-4">
+                    <a href="{% url 'enhanced_student_dashboard' %}" class="px-6 py-3 border border-neutral-300 dark:border-neutral-dark-300 text-neutral-700 dark:text-neutral-dark-700 rounded-lg font-medium hover:bg-neutral-200 dark:hover:bg-neutral-dark-200 transition-colors duration-150">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-6 py-3 bg-primary-500 dark:bg-primary-dark-500 text-white rounded-lg font-medium hover:bg-primary-600 dark:hover:bg-primary-dark-600 transition-colors duration-150 flex items-center space-x-2">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Create Session</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    select, input[type="number"], input[type="datetime-local"], textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #D4D4D4;
+        border-radius: 0.5rem;
+        background-color: #FAFAFA;
+        color: #171717;
+        transition: all 150ms ease-in-out;
+    }
+    
+    .dark select, .dark input[type="number"], .dark input[type="datetime-local"], .dark textarea {
+        border-color: #30363D;
+        background-color: #0D1117;
+        color: #F0F6FC;
+    }
+    
+    select:focus, input:focus, textarea:focus {
+        outline: none;
+        border-color: transparent;
+        ring: 2px;
+        ring-color: #0066FF;
+    }
+    
+    .dark select:focus, .dark input:focus, .dark textarea:focus {
+        ring-color: #3399FF;
+    }
+</style>
+{% endblock %}

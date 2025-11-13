@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit User - PAL Program{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="flex items-center mb-4">
+            <a href="{% url 'user_management' %}" 
+               class="text-neutral-600 dark:text-neutral-dark-600 hover:text-neutral-900 dark:hover:text-neutral-dark-900 mr-4">
+                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+            </a>
+            <div>
+                <h1 class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">Edit User</h1>
+                <p class="text-neutral-700 dark:text-neutral-dark-700 mt-2">Update user information for {{ user_to_edit.get_full_name }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl border border-neutral-200 dark:border-neutral-dark-200 shadow-md p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Display form errors -->
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                <div class="flex items-start">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 dark:text-red-400 mr-2 mt-0.5"></i>
+                    <div class="text-sm text-red-800 dark:text-red-200">
+                        {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Personal Information Section -->
+            <div class="space-y-6">
+                <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-dark-900 border-b border-neutral-300 dark:border-neutral-dark-300 pb-2">
+                    Personal Information
+                </h2>
+
+                <!-- Email -->
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Email Address <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.email.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- First Name and Last Name -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                            First Name <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                            {{ form.first_name.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                            Last Name <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                            {{ form.last_name.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role and Access Section -->
+            <div class="space-y-6">
+                <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-dark-900 border-b border-neutral-300 dark:border-neutral-dark-300 pb-2">
+                    Role and Access
+                </h2>
+
+                <!-- Role -->
+                <div>
+                    <label for="{{ form.role.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Role <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.role }}
+                    {% if form.role.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.role.errors.0 }}
+                    </p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-dark-500">
+                        Select the user's role in the system
+                    </p>
+                </div>
+
+                <!-- Student ID -->
+                <div>
+                    <label for="{{ form.student_id.id_for_label }}" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                        Student ID <span class="text-neutral-500 text-xs">(Required for Students only)</span>
+                    </label>
+                    {{ form.student_id }}
+                    {% if form.student_id.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.student_id.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-end space-x-4 pt-6 border-t border-neutral-300 dark:border-neutral-dark-300">
+                <a href="{% url 'user_management' %}" 
+                   class="px-6 py-3 bg-neutral-200 dark:bg-neutral-dark-200 text-neutral-900 dark:text-neutral-dark-900 font-semibold rounded-xl hover:bg-neutral-300 dark:hover:bg-neutral-dark-300 transition-all">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-6 py-3 bg-primary-500 dark:bg-primary-dark-500 text-white font-semibold rounded-xl hover:bg-primary-600 dark:hover:bg-primary-dark-600 transition-all transform hover:-translate-y-1 shadow-md hover:shadow-lg">
+                    <i data-lucide="save" class="w-5 h-5 inline mr-2"></i>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Card -->
+    <div class="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6">
+        <div class="flex items-start">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-3 mt-0.5"></i>
+            <div class="text-sm text-yellow-800 dark:text-yellow-200">
+                <p class="font-semibold mb-2">Important Notes:</p>
+                <ul class="list-disc list-inside space-y-1 ml-2">
+                    <li>Changing a user's role will affect their access permissions</li>
+                    <li>Student ID is required only for Student role</li>
+                    <li>Email addresses must be unique across all users</li>
+                    <li>To change the password, please use the password reset feature</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

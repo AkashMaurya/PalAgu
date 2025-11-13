@@ -1,0 +1,934 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics Dashboard - PAL Program{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8 flex items-start justify-between">
+        <div>
+            <h1 class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">Analytics Dashboard</h1>
+            <p class="text-neutral-700 dark:text-neutral-dark-700 mt-2">
+                {% if is_manager %}View-only access{% else %}Comprehensive analytics and insights{% endif %}
+            </p>
+        </div>
+
+        <!-- Export Button -->
+        <div>
+            <a href="{% url 'analytics_export_excel' %}?{{ request.GET.urlencode }}"
+               class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                Export to Excel
+            </a>
+        </div>
+    </div>
+    
+    {% if is_manager %}
+    <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+        <p class="text-blue-800 dark:text-blue-200 font-semibold">You are viewing in read-only mode</p>
+    </div>
+    {% endif %}
+    
+    <!-- Filter Panel -->
+    <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-6 mb-8 border border-neutral-200 dark:border-neutral-dark-200">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="analyticsFilterForm">
+            <div>
+                <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">Program</label>
+                <select name="program"
+                        id="programSelect"
+                        class="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-dark-300 bg-white dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                    <option value="">All Programs</option>
+                    {% for program in programs %}
+                    <option value="{{ program.id }}" {% if selected_program == program.id|stringformat:"s" %}selected{% endif %}>{{ program.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">Year</label>
+                <select name="year"
+                        id="yearSelect"
+                        class="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-dark-300 bg-white dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                    <option value="">All Years</option>
+                    {% for year in years %}
+                    <option value="{{ year.id }}" {% if selected_year == year.id|stringformat:"s" %}selected{% endif %}>{{ year.program.code }} - {{ year.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">Course</label>
+                <select name="course"
+                        id="courseSelect"
+                        class="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-dark-300 bg-white dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                    <option value="">All Courses</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}" {% if selected_course == course.id|stringformat:"s" %}selected{% endif %}>{{ course.code }} - {{ course.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">Tutor</label>
+                <select name="tutor"
+                        id="tutorSelect"
+                        class="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-dark-300 bg-white dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500">
+                    <option value="">All Tutors</option>
+                    {% for tutor in tutors %}
+                    <option value="{{ tutor.id }}" {% if selected_tutor == tutor.id|stringformat:"s" %}selected{% endif %}>{{ tutor.get_full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                    <i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>
+                    Start Date
+                </label>
+                <input type="date"
+                       name="start_date"
+                       id="startDateInput"
+                       value="{{ start_date }}"
+                       max="{{ today }}"
+                       class="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-dark-300 bg-white dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 cursor-pointer">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700 mb-2">
+                    <i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>
+                    End Date
+                </label>
+                <input type="date"
+                       name="end_date"
+                       id="endDateInput"
+                       value="{{ end_date }}"
+                       max="{{ today }}"
+                       class="w-full px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-dark-300 bg-white dark:bg-neutral-dark-50 text-neutral-900 dark:text-neutral-dark-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark-500 cursor-pointer">
+            </div>
+
+            <div class="flex items-end gap-2">
+                <button type="submit"
+                        class="flex-1 px-6 py-3 bg-primary-500 dark:bg-primary-dark-500 text-white font-semibold rounded-xl hover:bg-primary-600 dark:hover:bg-primary-dark-600 transition-all">
+                    <i data-lucide="filter" class="w-4 h-4 inline mr-2"></i>Apply
+                </button>
+                <a href="{% url 'analytics' %}"
+                   class="px-4 py-3 bg-neutral-300 dark:bg-neutral-dark-300 text-neutral-900 dark:text-neutral-dark-900 font-semibold rounded-xl hover:bg-neutral-400 dark:hover:bg-neutral-dark-400 transition-all">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Key Metrics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <!-- Tutors -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700">Total Tutors</h3>
+                <i data-lucide="award" class="w-5 h-5 text-primary-500 dark:text-primary-dark-500"></i>
+            </div>
+            <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ metrics.total_tutors }}</p>
+        </div>
+        
+        <!-- Sessions -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700">Total Sessions</h3>
+                <i data-lucide="calendar" class="w-5 h-5 text-blue-500"></i>
+            </div>
+            <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ metrics.total_sessions }}</p>
+        </div>
+        
+        <!-- Hours -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700">Total Hours</h3>
+                <i data-lucide="clock" class="w-5 h-5 text-green-500"></i>
+            </div>
+            <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ metrics.total_hours }}</p>
+        </div>
+        
+        <!-- Courses -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700">Total Courses</h3>
+                <i data-lucide="book-open" class="w-5 h-5 text-purple-500"></i>
+            </div>
+            <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ metrics.total_courses }}</p>
+        </div>
+        
+        <!-- Learners -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700">Total Learners</h3>
+                <i data-lucide="users" class="w-5 h-5 text-orange-500"></i>
+            </div>
+            <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ metrics.total_learners }}</p>
+        </div>
+        
+        <!-- Average Rating -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700">Avg Rating</h3>
+                <i data-lucide="star" class="w-5 h-5 text-yellow-500"></i>
+            </div>
+            <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ metrics.avg_rating|floatformat:1 }}<span class="text-2xl text-neutral-500 dark:text-neutral-dark-500">/5</span></p>
+        </div>
+        
+        <!-- Programs -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700">Total Programs</h3>
+                <i data-lucide="briefcase" class="w-5 h-5 text-red-500"></i>
+            </div>
+            <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ metrics.total_programs }}</p>
+        </div>
+        
+        <!-- Years -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700">Academic Years</h3>
+                <i data-lucide="layers" class="w-5 h-5 text-teal-500"></i>
+            </div>
+            <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ metrics.total_years }}</p>
+        </div>
+        
+        <!-- Feedback -->
+        <div class="bg-neutral-100 dark:bg-neutral-dark-100 rounded-2xl p-8 border border-neutral-200 dark:border-neutral-dark-200 shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-dark-700">Total Feedback</h3>
+                <i data-lucide="message-circle" class="w-5 h-5 text-pink-500"></i>
+            </div>
+            <p class="text-5xl font-bold text-neutral-900 dark:text-neutral-dark-900">{{ metrics.total_feedback }}</p>
+        </div>
+    </div>
+    
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Sessions by Program (Bar Chart) -->
+        <div class="bg-white dark:bg-neutral-dark-100 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-dark-200 shadow-lg hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-neutral-900 dark:text-neutral-dark-900 flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center mr-3">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 text-primary-600 dark:text-primary-400"></i>
+                    </div>
+                    Sessions by Program
+                </h2>
+            </div>
+            <div class="relative" style="height: 300px;">
+                <canvas id="sessionsByProgramChart"></canvas>
+                <div id="sessionsByProgramEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                        <i data-lucide="inbox" class="w-16 h-16 text-neutral-300 dark:text-neutral-dark-300 mx-auto mb-3"></i>
+                        <p class="text-neutral-500 dark:text-neutral-dark-500">No data available</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Distribution (Doughnut Chart) -->
+        <div class="bg-white dark:bg-neutral-dark-100 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-dark-200 shadow-lg hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-neutral-900 dark:text-neutral-dark-900 flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center mr-3">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-yellow-600 dark:text-yellow-400"></i>
+                    </div>
+                    Feedback Rating Distribution
+                </h2>
+            </div>
+            <div class="relative" style="height: 300px;">
+                <canvas id="feedbackDistributionChart"></canvas>
+                <div id="feedbackDistributionEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                        <i data-lucide="inbox" class="w-16 h-16 text-neutral-300 dark:text-neutral-dark-300 mx-auto mb-3"></i>
+                        <p class="text-neutral-500 dark:text-neutral-dark-500">No feedback data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessions by Status (Pie Chart) -->
+        <div class="bg-white dark:bg-neutral-dark-100 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-dark-200 shadow-lg hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-neutral-900 dark:text-neutral-dark-900 flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center mr-3">
+                        <i data-lucide="activity" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
+                    </div>
+                    Sessions by Status
+                </h2>
+            </div>
+            <div class="relative" style="height: 300px;">
+                <canvas id="sessionsByStatusChart"></canvas>
+                <div id="sessionsByStatusEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                        <i data-lucide="inbox" class="w-16 h-16 text-neutral-300 dark:text-neutral-dark-300 mx-auto mb-3"></i>
+                        <p class="text-neutral-500 dark:text-neutral-dark-500">No session data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learners by Program (Pie Chart) -->
+        <div class="bg-white dark:bg-neutral-dark-100 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-dark-200 shadow-lg hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-neutral-900 dark:text-neutral-dark-900 flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center mr-3">
+                        <i data-lucide="users" class="w-5 h-5 text-orange-600 dark:text-orange-400"></i>
+                    </div>
+                    Learners by Program
+                </h2>
+            </div>
+            <div class="relative" style="height: 300px;">
+                <canvas id="learnersByProgramChart"></canvas>
+                <div id="learnersByProgramEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                        <i data-lucide="inbox" class="w-16 h-16 text-neutral-300 dark:text-neutral-dark-300 mx-auto mb-3"></i>
+                        <p class="text-neutral-500 dark:text-neutral-dark-500">No learner data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- More Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Top 10 Courses (Horizontal Bar Chart) -->
+        <div class="bg-white dark:bg-neutral-dark-100 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-dark-200 shadow-lg hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-neutral-900 dark:text-neutral-dark-900 flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center mr-3">
+                        <i data-lucide="book-open" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i>
+                    </div>
+                    Top 10 Busiest Courses
+                </h2>
+            </div>
+            <div class="relative" style="height: 350px;">
+                <canvas id="sessionsByCourseChart"></canvas>
+                <div id="sessionsByCourseEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                        <i data-lucide="inbox" class="w-16 h-16 text-neutral-300 dark:text-neutral-dark-300 mx-auto mb-3"></i>
+                        <p class="text-neutral-500 dark:text-neutral-dark-500">No course data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top 10 Tutors by Sessions (Bar Chart) -->
+        <div class="bg-white dark:bg-neutral-dark-100 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-dark-200 shadow-lg hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-neutral-900 dark:text-neutral-dark-900 flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center mr-3">
+                        <i data-lucide="award" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                    Top 10 Tutors by Sessions
+                </h2>
+            </div>
+            <div class="relative" style="height: 350px;">
+                <canvas id="topTutorsChart"></canvas>
+                <div id="topTutorsEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                        <i data-lucide="inbox" class="w-16 h-16 text-neutral-300 dark:text-neutral-dark-300 mx-auto mb-3"></i>
+                        <p class="text-neutral-500 dark:text-neutral-dark-500">No tutor data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessions Over Time (Line Chart) -->
+        <div class="bg-white dark:bg-neutral-dark-100 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-dark-200 shadow-lg hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-neutral-900 dark:text-neutral-dark-900 flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center mr-3">
+                        <i data-lucide="trending-up" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
+                    </div>
+                    Sessions Trend (Last 12 Months)
+                </h2>
+            </div>
+            <div class="relative" style="height: 300px;">
+                <canvas id="sessionsOverTimeChart"></canvas>
+                <div id="sessionsOverTimeEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                        <i data-lucide="inbox" class="w-16 h-16 text-neutral-300 dark:text-neutral-dark-300 mx-auto mb-3"></i>
+                        <p class="text-neutral-500 dark:text-neutral-dark-500">No trend data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hours by Tutor (Horizontal Bar Chart) -->
+        <div class="bg-white dark:bg-neutral-dark-100 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-dark-200 shadow-lg hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-neutral-900 dark:text-neutral-dark-900 flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/20 flex items-center justify-center mr-3">
+                        <i data-lucide="clock" class="w-5 h-5 text-teal-600 dark:text-teal-400"></i>
+                    </div>
+                    Top 10 Tutors by Hours
+                </h2>
+            </div>
+            <div class="relative" style="height: 350px;">
+                <canvas id="hoursByTutorChart"></canvas>
+                <div id="hoursByTutorEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                        <i data-lucide="inbox" class="w-16 h-16 text-neutral-300 dark:text-neutral-dark-300 mx-auto mb-3"></i>
+                        <p class="text-neutral-500 dark:text-neutral-dark-500">No hours data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Feedback Sentiment (Pie Chart) -->
+        <div class="bg-white dark:bg-neutral-dark-100 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-dark-200 shadow-lg hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-neutral-900 dark:text-neutral-dark-900 flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-pink-100 dark:bg-pink-900/20 flex items-center justify-center mr-3">
+                        <i data-lucide="thumbs-up" class="w-5 h-5 text-pink-600 dark:text-pink-400"></i>
+                    </div>
+                    Would Attend Again?
+                </h2>
+            </div>
+            <div class="relative" style="height: 300px;">
+                <canvas id="feedbackAttendAgainChart"></canvas>
+                <div id="feedbackAttendAgainEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                        <i data-lucide="inbox" class="w-16 h-16 text-neutral-300 dark:text-neutral-dark-300 mx-auto mb-3"></i>
+                        <p class="text-neutral-500 dark:text-neutral-dark-500">No sentiment data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessions by Day of Week (Bar Chart) -->
+        <div class="bg-white dark:bg-neutral-dark-100 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-dark-200 shadow-lg hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-neutral-900 dark:text-neutral-dark-900 flex items-center">
+                    <div class="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/20 flex items-center justify-center mr-3">
+                        <i data-lucide="calendar-days" class="w-5 h-5 text-red-600 dark:text-red-400"></i>
+                    </div>
+                    Sessions by Day of Week
+                </h2>
+            </div>
+            <div class="relative" style="height: 300px;">
+                <canvas id="sessionsByWeekdayChart"></canvas>
+                <div id="sessionsByWeekdayEmpty" class="hidden absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                        <i data-lucide="inbox" class="w-16 h-16 text-neutral-300 dark:text-neutral-dark-300 mx-auto mb-3"></i>
+                        <p class="text-neutral-500 dark:text-neutral-dark-500">No weekday data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+    // Date validation for Start and End Date
+    const startDateInput = document.getElementById('startDateInput');
+    const endDateInput = document.getElementById('endDateInput');
+
+    // Set max date to today
+    const today = new Date().toISOString().split('T')[0];
+    if (startDateInput) startDateInput.max = today;
+    if (endDateInput) endDateInput.max = today;
+
+    // Validate date range
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', function() {
+            if (endDateInput.value && this.value > endDateInput.value) {
+                alert('Start date cannot be after end date');
+                this.value = '';
+            }
+        });
+
+        endDateInput.addEventListener('change', function() {
+            if (startDateInput.value && this.value < startDateInput.value) {
+                alert('End date cannot be before start date');
+                this.value = '';
+            }
+        });
+    }
+
+    // Chart.js default configuration
+    Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+    Chart.defaults.color = '#6B7280';
+
+    // Color palettes
+    const colors = {
+        primary: ['#0066FF', '#0052CC', '#003D99', '#002966', '#001433'],
+        rainbow: ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'],
+        status: {
+            'Scheduled': '#3B82F6',
+            'Completed': '#10B981',
+            'Cancelled': '#EF4444',
+            'Pending': '#F59E0B'
+        }
+    };
+
+    // Helper function to show/hide empty state
+    function toggleEmptyState(chartId, isEmpty) {
+        const emptyDiv = document.getElementById(chartId + 'Empty');
+        const canvas = document.getElementById(chartId);
+        if (isEmpty) {
+            if (emptyDiv) emptyDiv.classList.remove('hidden');
+            if (canvas) canvas.style.display = 'none';
+        } else {
+            if (emptyDiv) emptyDiv.classList.add('hidden');
+            if (canvas) canvas.style.display = 'block';
+        }
+    }
+
+    // 1. Sessions by Program Chart (Bar)
+    const sessionsByProgramData = {{ sessions_by_program|safe }};
+    if (sessionsByProgramData.length > 0) {
+        toggleEmptyState('sessionsByProgramChart', false);
+        new Chart(document.getElementById('sessionsByProgramChart'), {
+            type: 'bar',
+            data: {
+                labels: sessionsByProgramData.map(d => d.course__program__name || 'Unknown'),
+                datasets: [{
+                    label: 'Sessions',
+                    data: sessionsByProgramData.map(d => d.count),
+                    backgroundColor: colors.primary[0],
+                    borderRadius: 8,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        callbacks: {
+                            label: (context) => `Sessions: ${context.parsed.y}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    } else {
+        toggleEmptyState('sessionsByProgramChart', true);
+    }
+
+    // 2. Feedback Distribution Chart (Doughnut)
+    const feedbackDistributionData = {{ feedbacks_by_rating|safe }};
+    if (feedbackDistributionData.length > 0) {
+        toggleEmptyState('feedbackDistributionChart', false);
+        new Chart(document.getElementById('feedbackDistributionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: feedbackDistributionData.map(d => `${d.usefulness_rating} ⭐`),
+                datasets: [{
+                    data: feedbackDistributionData.map(d => d.count),
+                    backgroundColor: ['#EF4444', '#F59E0B', '#FCD34D', '#10B981', '#059669'],
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: { size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: (context) => {
+                                const total = feedbackDistributionData.reduce((a, b) => a + b.count, 0);
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.parsed} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        toggleEmptyState('feedbackDistributionChart', true);
+    }
+
+    // 3. Sessions by Status Chart (Pie)
+    const sessionsByStatusData = {{ sessions_by_status|safe }};
+    if (sessionsByStatusData.length > 0) {
+        toggleEmptyState('sessionsByStatusChart', false);
+        new Chart(document.getElementById('sessionsByStatusChart'), {
+            type: 'pie',
+            data: {
+                labels: sessionsByStatusData.map(d => d.status || 'Unknown'),
+                datasets: [{
+                    data: sessionsByStatusData.map(d => d.count),
+                    backgroundColor: sessionsByStatusData.map(d => colors.status[d.status] || '#6B7280'),
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 12 } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: (context) => {
+                                const total = sessionsByStatusData.reduce((a, b) => a + b.count, 0);
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.parsed} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        toggleEmptyState('sessionsByStatusChart', true);
+    }
+
+    // 4. Learners by Program Chart (Pie)
+    const learnersByProgramData = {{ learners_by_program|safe }};
+    if (learnersByProgramData.length > 0) {
+        toggleEmptyState('learnersByProgramChart', false);
+        new Chart(document.getElementById('learnersByProgramChart'), {
+            type: 'pie',
+            data: {
+                labels: learnersByProgramData.map(d => d.course__program__name || 'Unknown'),
+                datasets: [{
+                    data: learnersByProgramData.map(d => d.count),
+                    backgroundColor: colors.rainbow,
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 12 } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: (context) => `${context.label}: ${context.parsed} learners`
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        toggleEmptyState('learnersByProgramChart', true);
+    }
+
+    // 5. Sessions by Course Chart (Horizontal Bar)
+    const sessionsByCourseData = {{ sessions_by_course|safe }};
+    if (sessionsByCourseData.length > 0) {
+        toggleEmptyState('sessionsByCourseChart', false);
+        new Chart(document.getElementById('sessionsByCourseChart'), {
+            type: 'bar',
+            data: {
+                labels: sessionsByCourseData.map(d => {
+                    const code = d.course__code || '';
+                    const name = d.course__name || 'Unknown';
+                    return name.length > 30 ? name.substring(0, 30) + '...' : name;
+                }),
+                datasets: [{
+                    label: 'Sessions',
+                    data: sessionsByCourseData.map(d => d.count),
+                    backgroundColor: '#8B5CF6',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            title: (context) => sessionsByCourseData[context[0].dataIndex].course__code + ' - ' + sessionsByCourseData[context[0].dataIndex].course__name,
+                            label: (context) => `Sessions: ${context.parsed.x}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    } else {
+        toggleEmptyState('sessionsByCourseChart', true);
+    }
+
+    // 6. Top Tutors by Sessions Chart (Bar)
+    const topTutorsData = {{ top_tutors_sessions|safe }};
+    if (topTutorsData.length > 0) {
+        toggleEmptyState('topTutorsChart', false);
+        new Chart(document.getElementById('topTutorsChart'), {
+            type: 'bar',
+            data: {
+                labels: topTutorsData.map(d => `${d.tutor__first_name || ''} ${d.tutor__last_name || ''}`),
+                datasets: [{
+                    label: 'Sessions',
+                    data: topTutorsData.map(d => d.count),
+                    backgroundColor: '#3B82F6',
+                    borderRadius: 8,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: (context) => `Sessions: ${context.parsed.y}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    } else {
+        toggleEmptyState('topTutorsChart', true);
+    }
+
+    // 7. Sessions Over Time Chart (Line)
+    const sessionsOverTimeData = {{ sessions_over_time|safe }};
+    if (sessionsOverTimeData.length > 0) {
+        toggleEmptyState('sessionsOverTimeChart', false);
+        new Chart(document.getElementById('sessionsOverTimeChart'), {
+            type: 'line',
+            data: {
+                labels: sessionsOverTimeData.map(d => {
+                    const date = new Date(d.month);
+                    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                }),
+                datasets: [{
+                    label: 'Sessions',
+                    data: sessionsOverTimeData.map(d => d.count),
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#10B981',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: (context) => `Sessions: ${context.parsed.y}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    } else {
+        toggleEmptyState('sessionsOverTimeChart', true);
+    }
+
+    // 8. Hours by Tutor Chart (Horizontal Bar)
+    const hoursByTutorData = {{ hours_by_tutor|safe }};
+    if (hoursByTutorData.length > 0) {
+        toggleEmptyState('hoursByTutorChart', false);
+        new Chart(document.getElementById('hoursByTutorChart'), {
+            type: 'bar',
+            data: {
+                labels: hoursByTutorData.map(d => `${d.tutor__first_name || ''} ${d.tutor__last_name || ''}`),
+                datasets: [{
+                    label: 'Hours',
+                    data: hoursByTutorData.map(d => (d.total_hours / 60).toFixed(1)),
+                    backgroundColor: '#14B8A6',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: (context) => `Hours: ${context.parsed.x}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    } else {
+        toggleEmptyState('hoursByTutorChart', true);
+    }
+
+    // 9. Feedback Attend Again Chart (Pie)
+    const feedbackAttendAgainData = {{ feedback_attend_again|safe }};
+    if (feedbackAttendAgainData.length > 0) {
+        toggleEmptyState('feedbackAttendAgainChart', false);
+        new Chart(document.getElementById('feedbackAttendAgainChart'), {
+            type: 'pie',
+            data: {
+                labels: feedbackAttendAgainData.map(d => d.attend_again ? 'Yes ✓' : 'No ✗'),
+                datasets: [{
+                    data: feedbackAttendAgainData.map(d => d.count),
+                    backgroundColor: ['#10B981', '#EF4444'],
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 12 } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: (context) => {
+                                const total = feedbackAttendAgainData.reduce((a, b) => a + b.count, 0);
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.parsed} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        toggleEmptyState('feedbackAttendAgainChart', true);
+    }
+
+    // 10. Sessions by Weekday Chart (Bar)
+    const sessionsByWeekdayData = {{ sessions_by_weekday|safe }};
+    const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    if (sessionsByWeekdayData.length > 0) {
+        toggleEmptyState('sessionsByWeekdayChart', false);
+        new Chart(document.getElementById('sessionsByWeekdayChart'), {
+            type: 'bar',
+            data: {
+                labels: sessionsByWeekdayData.map(d => weekdayNames[d.weekday - 1] || 'Unknown'),
+                datasets: [{
+                    label: 'Sessions',
+                    data: sessionsByWeekdayData.map(d => d.count),
+                    backgroundColor: colors.rainbow,
+                    borderRadius: 8,
+                    barThickness: 50
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: (context) => `Sessions: ${context.parsed.y}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    } else {
+        toggleEmptyState('sessionsByWeekdayChart', true);
+    }
+</script>
+{% endblock %}
+{% endblock %}
