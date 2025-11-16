@@ -12,8 +12,41 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
-from decouple import config, Csv
-import dj_database_url
+
+# Try to import decouple, fallback to os.environ if not available
+try:
+    from decouple import config, Csv
+except ImportError:
+    # Fallback for local development without python-decouple
+    class Csv:
+        """Helper to convert comma-separated strings to lists"""
+        def __call__(self, value):
+            if isinstance(value, str):
+                return [item.strip() for item in value.split(',')]
+            return value
+
+    class ConfigHelper:
+        def __call__(self, key, default=None, cast=None):
+            value = os.environ.get(key, default)
+            if cast and value is not None:
+                if cast == bool:
+                    # If value is already a bool, return it
+                    if isinstance(value, bool):
+                        return value
+                    # Otherwise convert string to bool
+                    return str(value).lower() in ('true', '1', 'yes')
+                # For Csv and other callables
+                if callable(cast):
+                    return cast(value)
+                return cast(value)
+            return value
+
+    config = ConfigHelper()
+
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,14 +78,23 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise for static files
+]
+
+# Add WhiteNoise only if available (production)
+try:
+    import whitenoise
+    MIDDLEWARE.append('whitenoise.middleware.WhiteNoiseMiddleware')
+except ImportError:
+    pass
+
+MIDDLEWARE.extend([
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+])
 
 ROOT_URLCONF = 'config.urls'
 
@@ -80,13 +122,22 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Use DATABASE_URL from environment variable if available (for production)
 # Otherwise, use SQLite for local development
-DATABASES = {
-    'default': dj_database_url.config(
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-}
+if dj_database_url and os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+else:
+    # Fallback to SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
