@@ -859,8 +859,89 @@ def manager_analytics(request):
 
 @login_required
 def student_dashboard(request):
-    """Student/Tutor dashboard"""
-    return render(request, 'core/student_dashboard.html')
+    """Student/Tutor dashboard with detailed tracking"""
+    from datetime import timedelta
+    from django.db.models import Sum, Count, Q
+
+    user = request.user
+    now = timezone.now()
+    week_start = now - timedelta(days=now.weekday())
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # Get student profile if exists
+    try:
+        student = Student.objects.get(user=user)
+    except Student.DoesNotExist:
+        student = None
+
+    # 1. Upcoming Sessions (as learner)
+    upcoming_sessions = Session.objects.filter(
+        learner=user,
+        session_date__gte=now,
+        status='Scheduled'
+    ).order_by('session_date')
+
+    upcoming_count = upcoming_sessions.count()
+    upcoming_this_week = upcoming_sessions.filter(
+        session_date__gte=week_start,
+        session_date__lt=week_start + timedelta(days=7)
+    ).count()
+
+    # 2. Registered Courses (from student profile)
+    registered_courses_count = 0
+    if student:
+        # Count courses from the student's year
+        registered_courses_count = Course.objects.filter(
+            year=student.year
+        ).count()
+
+    # 3. Pending Feedback (sessions completed but no feedback submitted)
+    completed_sessions = Session.objects.filter(
+        learner=user,
+        status='Completed'
+    )
+
+    # Get sessions that have feedback
+    sessions_with_feedback = Feedback.objects.filter(
+        learner=user
+    ).values_list('session_id', flat=True)
+
+    # Pending feedback = completed sessions without feedback
+    pending_feedback_count = completed_sessions.exclude(
+        id__in=sessions_with_feedback
+    ).count()
+
+    # 4. Hours Completed (total and this month)
+    total_hours = completed_sessions.aggregate(
+        total=Sum('duration')
+    )['total'] or 0
+    total_hours = total_hours / 60  # Convert minutes to hours
+
+    hours_this_month = completed_sessions.filter(
+        session_date__gte=month_start
+    ).aggregate(
+        total=Sum('duration')
+    )['total'] or 0
+    hours_this_month = hours_this_month / 60  # Convert minutes to hours
+
+    # Recent Sessions (last 5)
+    recent_sessions = Session.objects.filter(
+        Q(learner=user) | Q(tutor=user)
+    ).order_by('-session_date')[:5]
+
+    context = {
+        'upcoming_count': upcoming_count,
+        'upcoming_this_week': upcoming_this_week,
+        'registered_courses_count': registered_courses_count,
+        'pending_feedback_count': pending_feedback_count,
+        'total_hours': round(total_hours, 1),
+        'hours_this_month': round(hours_this_month, 1),
+        'upcoming_sessions': upcoming_sessions[:5],  # Show first 5
+        'recent_sessions': recent_sessions,
+        'student': student,
+    }
+
+    return render(request, 'core/student_dashboard.html', context)
 
 
 @login_required

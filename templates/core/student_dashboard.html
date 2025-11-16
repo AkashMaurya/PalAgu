@@ -17,8 +17,8 @@
       <div class="flex items-start justify-between">
         <div>
           <p class="text-sm text-[var(--color-text-secondary)]">Upcoming Sessions</p>
-          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">0</h2>
-          <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">+0 this week</p>
+          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">{{ upcoming_count }}</h2>
+          <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">+{{ upcoming_this_week }} this week</p>
         </div>
         <div class="p-3 rounded-[var(--radius-md)] bg-[var(--color-background-secondary)] text-[var(--color-primary-600)]">
           <i data-lucide="calendar" class="w-5 h-5"></i>
@@ -30,7 +30,7 @@
       <div class="flex items-start justify-between">
         <div>
           <p class="text-sm text-[var(--color-text-secondary)]">Registered Courses</p>
-          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">0</h2>
+          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">{{ registered_courses_count }}</h2>
           <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">Active semester</p>
         </div>
         <div class="p-3 rounded-[var(--radius-md)] bg-[var(--color-background-secondary)] text-[var(--color-accent-500)]">
@@ -43,7 +43,7 @@
       <div class="flex items-start justify-between">
         <div>
           <p class="text-sm text-[var(--color-text-secondary)]">Pending Feedback</p>
-          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">0</h2>
+          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">{{ pending_feedback_count }}</h2>
           <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">Needs attention</p>
         </div>
         <div class="p-3 rounded-[var(--radius-md)] bg-[var(--color-background-secondary)] text-[var(--color-warning-600)]">
@@ -56,8 +56,8 @@
       <div class="flex items-start justify-between">
         <div>
           <p class="text-sm text-[var(--color-text-secondary)]">Hours Completed</p>
-          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">0</h2>
-          <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">+0 this month</p>
+          <h2 class="mt-2 text-3xl font-bold text-[var(--color-text-primary)]">{{ total_hours }}</h2>
+          <p class="mt-1 text-xs text-[var(--color-text-tertiary)]">+{{ hours_this_month }} this month</p>
         </div>
         <div class="p-3 rounded-[var(--radius-md)] bg-[var(--color-background-secondary)] text-[var(--color-info-500)]">
           <i data-lucide="trending-up" class="w-5 h-5"></i>
@@ -90,6 +90,47 @@
     </a>
   </div>
 
+  <!-- Upcoming Sessions Details -->
+  {% if upcoming_sessions %}
+  <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-[var(--color-text-primary)] font-semibold">Upcoming Sessions Details</h3>
+      <a href="{% url 'create_session' %}" class="text-sm text-[var(--color-primary-600)] hover:text-[var(--color-primary-700)]">Create Session</a>
+    </div>
+    <div class="space-y-3">
+      {% for session in upcoming_sessions %}
+      <div class="flex items-start justify-between p-4 rounded-[var(--radius-md)] bg-[var(--color-background-secondary)] border border-[var(--color-border)]">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="inline-flex items-center px-2 py-1 rounded-[var(--radius-sm)] bg-[var(--color-primary-50)] text-[var(--color-primary-700)] text-xs font-medium">
+              {{ session.course.code }}
+            </span>
+            <span class="text-sm font-medium text-[var(--color-text-primary)]">{{ session.course.name }}</span>
+          </div>
+          <div class="flex items-center gap-4 text-xs text-[var(--color-text-secondary)] mt-2">
+            <div class="flex items-center gap-1">
+              <i data-lucide="user" class="w-3 h-3"></i>
+              <span>Tutor: {{ session.tutor.get_full_name }}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <i data-lucide="calendar" class="w-3 h-3"></i>
+              <span>{{ session.session_date|date:"M d, Y" }}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <i data-lucide="clock" class="w-3 h-3"></i>
+              <span>{{ session.session_date|date:"h:i A" }} ({{ session.duration }} min)</span>
+            </div>
+          </div>
+        </div>
+        <span class="inline-flex items-center px-2 py-1 rounded-[var(--radius-sm)] bg-[var(--color-success-50)] text-[var(--color-success-700)] text-xs font-medium">
+          {{ session.status }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Recent & Announcements -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-6">
@@ -97,15 +138,53 @@
         <h3 class="text-[var(--color-text-primary)] font-semibold">Recent Sessions</h3>
         <a href="{% url 'create_session' %}" class="text-sm text-[var(--color-primary-600)] hover:text-[var(--color-primary-700)]">Create Session</a>
       </div>
+      {% if recent_sessions %}
+      <div class="space-y-3">
+        {% for session in recent_sessions %}
+        <div class="flex items-start justify-between p-3 rounded-[var(--radius-md)] border border-[var(--color-border)]">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-medium text-[var(--color-text-primary)]">{{ session.course.code }}</span>
+              {% if session.tutor == user %}
+              <span class="text-xs text-[var(--color-text-tertiary)]">with {{ session.learner.get_full_name }}</span>
+              {% else %}
+              <span class="text-xs text-[var(--color-text-tertiary)]">with {{ session.tutor.get_full_name }}</span>
+              {% endif %}
+            </div>
+            <div class="flex items-center gap-3 text-xs text-[var(--color-text-secondary)]">
+              <span>{{ session.session_date|date:"M d, h:i A" }}</span>
+              <span>{{ session.duration }} min</span>
+            </div>
+          </div>
+          <span class="inline-flex items-center px-2 py-1 rounded-[var(--radius-sm)] {% if session.status == 'Completed' %}bg-[var(--color-success-50)] text-[var(--color-success-700)]{% elif session.status == 'Scheduled' %}bg-[var(--color-info-50)] text-[var(--color-info-700)]{% else %}bg-[var(--color-error-50)] text-[var(--color-error-700)]{% endif %} text-xs font-medium">
+            {{ session.status }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
       <div class="text-sm text-[var(--color-text-secondary)]">
         <p>No recent sessions yet.</p>
       </div>
+      {% endif %}
     </div>
     <div class="rounded-[var(--radius-lg)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] p-6">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-[var(--color-text-primary)] font-semibold">Announcements</h3>
       </div>
       <ul class="space-y-4">
+        {% if pending_feedback_count > 0 %}
+        <li class="p-3 rounded-[var(--radius-md)] bg-[var(--color-warning-50)] border border-[var(--color-warning-200)]">
+          <div class="flex items-start gap-2">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-[var(--color-warning-600)] mt-0.5"></i>
+            <div>
+              <p class="text-sm font-medium text-[var(--color-warning-900)]">Pending Feedback</p>
+              <p class="text-xs text-[var(--color-warning-700)] mt-1">You have {{ pending_feedback_count }} session{{ pending_feedback_count|pluralize }} waiting for feedback.</p>
+              <a href="{% url 'learner_feedback_submit' %}" class="text-xs text-[var(--color-warning-700)] underline mt-1 inline-block">Submit Feedback →</a>
+            </div>
+          </div>
+        </li>
+        {% endif %}
         <li>
           <p class="text-sm text-[var(--color-text-primary)]">Feedback Survey Reminder</p>
           <p class="text-xs text-[var(--color-text-tertiary)]">Please complete feedback for your recent tutoring sessions.</p>
