@@ -13,8 +13,13 @@
             </p>
         </div>
 
-        <!-- Export Button -->
-        <div>
+        <!-- Action Buttons -->
+        <div class="flex gap-3">
+            <a href="{% url 'manage_feedback' %}"
+               class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg">
+                <i data-lucide="message-square" class="w-5 h-5"></i>
+                View Feedback
+            </a>
             <a href="{% url 'analytics_export_excel' %}?{{ request.GET.urlencode }}"
                class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg">
                 <i data-lucide="download" class="w-5 h-5"></i>

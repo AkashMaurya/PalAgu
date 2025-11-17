@@ -1492,6 +1492,248 @@ def tutor_registration_step3(request):
 # Enhanced Student/Tutor Dashboards
 
 @login_required
+def manage_feedback_submissions(request):
+    """View and manage all feedback submissions (Admin/Manager only)"""
+    if request.user.role not in ['Admin', 'Manager']:
+        messages.error(request, 'Access denied')
+        return redirect('dashboard')
+
+    # Get filter parameters
+    program_filter = request.GET.get('program', '')
+    tutor_filter = request.GET.get('tutor', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    search = request.GET.get('search', '')
+
+    # Base queryset with related data
+    feedbacks = Feedback.objects.select_related(
+        'learner', 'tutor', 'program', 'year', 'session'
+    ).all()
+
+    # Apply filters
+    if program_filter:
+        feedbacks = feedbacks.filter(program_id=program_filter)
+
+    if tutor_filter:
+        feedbacks = feedbacks.filter(tutor_id=tutor_filter)
+
+    if date_from:
+        try:
+            date_from_obj = timezone.datetime.strptime(date_from, '%Y-%m-%d')
+            feedbacks = feedbacks.filter(created_at__gte=date_from_obj)
+        except ValueError:
+            pass
+
+    if date_to:
+        try:
+            date_to_obj = timezone.datetime.strptime(date_to, '%Y-%m-%d')
+            # Add one day to include the entire end date
+            date_to_obj = date_to_obj + timedelta(days=1)
+            feedbacks = feedbacks.filter(created_at__lt=date_to_obj)
+        except ValueError:
+            pass
+
+    if search:
+        feedbacks = feedbacks.filter(
+            Q(learner__first_name__icontains=search) |
+            Q(learner__last_name__icontains=search) |
+            Q(learner__email__icontains=search) |
+            Q(tutor__first_name__icontains=search) |
+            Q(tutor__last_name__icontains=search) |
+            Q(topic__icontains=search)
+        )
+
+    # Get filter options
+    programs = Program.objects.all()
+    tutors = User.objects.filter(
+        tutor_applications__status='Approved'
+    ).distinct().order_by('first_name', 'last_name')
+
+    # Pagination
+    paginator = Paginator(feedbacks, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Calculate statistics
+    total_feedbacks = feedbacks.count()
+    avg_explanation_rating = feedbacks.aggregate(
+        avg=Avg('explanation_rating')
+    )['avg'] or 0
+    avg_usefulness_rating = feedbacks.aggregate(
+        avg=Avg('usefulness_rating')
+    )['avg'] or 0
+    attend_again_percentage = 0
+    if total_feedbacks > 0:
+        attend_again_count = feedbacks.filter(attend_again=True).count()
+        attend_again_percentage = (attend_again_count / total_feedbacks) * 100
+
+    context = {
+        'feedbacks': page_obj,
+        'programs': programs,
+        'tutors': tutors,
+        'program_filter': program_filter,
+        'tutor_filter': tutor_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'search': search,
+        'total_feedbacks': total_feedbacks,
+        'avg_explanation_rating': round(avg_explanation_rating, 2),
+        'avg_usefulness_rating': round(avg_usefulness_rating, 2),
+        'attend_again_percentage': round(attend_again_percentage, 1),
+        'is_manager': request.user.role == 'Manager',
+    }
+
+    return render(request, 'core/manage_feedback.html', context)
+
+
+@login_required
+def export_feedback_excel(request):
+    """Export feedback submissions to Excel (Admin/Manager only)"""
+    if request.user.role not in ['Admin', 'Manager']:
+        messages.error(request, 'Access denied')
+        return redirect('dashboard')
+
+    # Get selected IDs if any
+    selected_ids = request.GET.get('ids', '')
+
+    # Base queryset
+    feedbacks = Feedback.objects.select_related(
+        'learner', 'tutor', 'program', 'year', 'session'
+    ).all()
+
+    # If specific IDs selected, filter by them
+    if selected_ids:
+        id_list = [int(id) for id in selected_ids.split(',') if id.strip()]
+        feedbacks = feedbacks.filter(id__in=id_list)
+    else:
+        # Apply same filters as the view page
+        program_filter = request.GET.get('program', '')
+        tutor_filter = request.GET.get('tutor', '')
+        date_from = request.GET.get('date_from', '')
+        date_to = request.GET.get('date_to', '')
+        search = request.GET.get('search', '')
+
+        if program_filter:
+            feedbacks = feedbacks.filter(program_id=program_filter)
+
+        if tutor_filter:
+            feedbacks = feedbacks.filter(tutor_id=tutor_filter)
+
+        if date_from:
+            try:
+                date_from_obj = timezone.datetime.strptime(date_from, '%Y-%m-%d')
+                feedbacks = feedbacks.filter(created_at__gte=date_from_obj)
+            except ValueError:
+                pass
+
+        if date_to:
+            try:
+                date_to_obj = timezone.datetime.strptime(date_to, '%Y-%m-%d')
+                date_to_obj = date_to_obj + timedelta(days=1)
+                feedbacks = feedbacks.filter(created_at__lt=date_to_obj)
+            except ValueError:
+                pass
+
+        if search:
+            feedbacks = feedbacks.filter(
+                Q(learner__first_name__icontains=search) |
+                Q(learner__last_name__icontains=search) |
+                Q(learner__email__icontains=search) |
+                Q(tutor__first_name__icontains=search) |
+                Q(tutor__last_name__icontains=search) |
+                Q(topic__icontains=search)
+            )
+
+    # Create Excel workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Feedback Submissions"
+
+    # Define headers
+    headers = [
+        'ID', 'Submission Date', 'Student Name', 'Student Email', 'Student ID',
+        'Program', 'Year', 'Tutor Name', 'Tutor Email',
+        'Session Topic', 'Duration', 'Session Date',
+        'Explanation Rating', 'Usefulness Rating', 'Overall Rating',
+        'Attend Again?', 'Well Organized?',
+        'Improvement Comments'
+    ]
+
+    # Style for headers
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    # Write headers
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = border
+
+    # Write data
+    for row_num, feedback in enumerate(feedbacks, 2):
+        # Get duration display
+        duration_display = dict(Feedback.DURATION_CHOICES).get(feedback.duration, feedback.duration)
+
+        # Get session date
+        session_date = feedback.session.session_date if feedback.session else feedback.session_date
+
+        row_data = [
+            feedback.id,
+            feedback.created_at.strftime('%Y-%m-%d %H:%M'),
+            feedback.learner.get_full_name(),
+            feedback.learner.email,
+            feedback.learner.student_id or 'N/A',
+            feedback.program.name,
+            feedback.year.name,
+            feedback.tutor.get_full_name(),
+            feedback.tutor.email,
+            feedback.topic,
+            duration_display,
+            session_date.strftime('%Y-%m-%d %H:%M') if session_date else 'N/A',
+            feedback.explanation_rating,
+            feedback.usefulness_rating,
+            feedback.rating or 'N/A',
+            'Yes' if feedback.attend_again else 'No',
+            'Yes' if feedback.well_organized else 'No',
+            feedback.comments or 'No comments'
+        ]
+
+        for col_num, value in enumerate(row_data, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=value)
+            cell.border = border
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+
+    # Adjust column widths
+    column_widths = [8, 18, 20, 25, 12, 15, 15, 20, 25, 30, 15, 18, 12, 12, 12, 12, 12, 40]
+    for col_num, width in enumerate(column_widths, 1):
+        ws.column_dimensions[ws.cell(row=1, column=col_num).column_letter].width = width
+
+    # Create HTTP response
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+    # Generate filename with timestamp
+    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'feedback_submissions_{timestamp}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    # Save workbook to response
+    wb.save(response)
+
+    return response
+
+
+@login_required
 def enhanced_student_dashboard(request):
     """Enhanced student dashboard with sessions and feedback"""
     user = request.user

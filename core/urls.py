@@ -34,6 +34,10 @@ urlpatterns = [
     # Learner Feedback (PAL Action Plan v2)
     path('feedback/submit/', views.learner_feedback_submit, name='learner_feedback_submit'),
 
+    # Feedback Management (Admin/Manager)
+    path('feedback/manage/', views.manage_feedback_submissions, name='manage_feedback'),
+    path('feedback/export/', views.export_feedback_excel, name='export_feedback_excel'),
+
     # Analytics Export (PAL Action Plan v2)
     path('analytics/export-pdf/', views.analytics_export_pdf, name='analytics_export_pdf'),
     path('analytics/export-excel/', views.analytics_export_excel, name='analytics_export_excel'),

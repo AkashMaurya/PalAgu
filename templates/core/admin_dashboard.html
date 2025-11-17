@@ -20,6 +20,57 @@
         </div>
     </div>
     
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <a href="{% url 'user_management' %}"
+           class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800 hover:shadow-lg transition-all transform hover:-translate-y-1">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-blue-500 rounded-xl">
+                    <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-dark-900 mb-1">Manage Users</h3>
+            <p class="text-sm text-neutral-700 dark:text-neutral-dark-700">View and manage all system users</p>
+        </a>
+
+        <a href="{% url 'analytics' %}"
+           class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-2xl p-6 border border-purple-200 dark:border-purple-800 hover:shadow-lg transition-all transform hover:-translate-y-1">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-purple-500 rounded-xl">
+                    <i data-lucide="bar-chart-2" class="w-6 h-6 text-white"></i>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-dark-900 mb-1">Analytics</h3>
+            <p class="text-sm text-neutral-700 dark:text-neutral-dark-700">View system analytics and reports</p>
+        </a>
+
+        <a href="{% url 'manage_feedback' %}"
+           class="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-2xl p-6 border border-emerald-200 dark:border-emerald-800 hover:shadow-lg transition-all transform hover:-translate-y-1">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-emerald-500 rounded-xl">
+                    <i data-lucide="message-square" class="w-6 h-6 text-white"></i>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-dark-900 mb-1">Feedback</h3>
+            <p class="text-sm text-neutral-700 dark:text-neutral-dark-700">View and export student feedback</p>
+        </a>
+
+        <a href="{% url 'create_session' %}"
+           class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-2xl p-6 border border-orange-200 dark:border-orange-800 hover:shadow-lg transition-all transform hover:-translate-y-1">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-orange-500 rounded-xl">
+                    <i data-lucide="calendar-plus" class="w-6 h-6 text-white"></i>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-orange-600 dark:text-orange-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-dark-900 mb-1">Create Session</h3>
+            <p class="text-sm text-neutral-700 dark:text-neutral-dark-700">Schedule a new tutoring session</p>
+        </a>
+    </div>
+
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <!-- Total Users -->
